@@ -10,3 +10,4 @@ slowapi==0.1.10
 python-magic
 psycopg2-binary>=2.9.9
 jinja2
+alembic
