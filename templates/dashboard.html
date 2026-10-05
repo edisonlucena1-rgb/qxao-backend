@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="es" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Qxao - Agentes de Inteligencia Artificial Conversacional. Cuando digas, hacemos. Automatizamos tu empresa.">
+    <meta name="keywords" content="agentes ia, inteligencia artificial, automatizacion, chatbot, crm, qxao">
+    <title>Qxao | Cuando digas</title>
+
+    <!-- FAVICON -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 671.14 514.29'><path fill='%23690991' d='M517.17,230.82,620.56,94.91a5.48,5.48,0,0,0-4.37-8.8H536.61a5.47,5.47,0,0,0-4.4,2.21l-59.66,80.2a5.48,5.48,0,0,1-8.84-.05s-26.53-35.94-49.29-67.71c-6.48-9.05-16.38-12-27.42-13.47-21.43-2.86-53.74,1.27-53.86,1.28-193.59,24.5-296.23,135.12-317,158a5.49,5.49,0,0,0,.49,7.83c128.48,111.9,275.62,131.39,345.21,134.45,0,0,33.44.47,39.19-5.87.49-.54,1-1.06,1.43-1.64,6.59-8.79,58.92-79.17,58.92-79.17a5.48,5.48,0,0,1,8.86.08l60.27,84.29A5.48,5.48,0,0,0,535,388.8h76.61a10,10,0,0,0,8-16.07L517.16,237.45A5.49,5.49,0,0,1,517.17,230.82ZM351.73,322.93a5.35,5.35,0,0,1-6.22,1.72l0,0a84.63,84.63,0,0,1-29.27-19.37,89.65,89.65,0,0,1-19.38-30.12A102.31,102.31,0,0,1,289.88,237q0-21.06,6.94-38.33a90.09,90.09,0,0,1,19.38-29.9,84.05,84.05,0,0,1,25.07-17.57c1-.46,2.09-.93,3.16-1.35s2.06-.8,3.11-1.17a5.51,5.51,0,0,1,6.24,1.87l61.67,82.23a5.49,5.49,0,0,1,0,6.62Z'/></svg>">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Open+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: { colors: { primary: '#690991', darkBg: '#0f172a', darkCard: '#1e293b' } }
+            }
+        }
+    </script>
+    
+    <style>
+        body { font-family: 'Open Sans', system-ui, sans-serif; }
+        h1, h2, h3, h4 { font-family: 'Montserrat', sans-serif; }
+
+        @keyframes mover-patron { 0% { background-position: 0 0; } 100% { background-position: -420px -300px; } }
+        .bg-grid-light {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='84' height='60' viewBox='0 -30.22 42.44 30.22'%3E%3Cpath fill='%23690991' fill-opacity='0.025' d='M18.33-5.39c1.6-0.64,2.98-1.55,4.16-2.72c1.18-1.17,2.1-2.53,2.76-4.09c0.66-1.56,0.99-3.26,0.99-5.12c0-1.85-0.33-3.56-0.99-5.12c-0.66-1.56-1.58-2.92-2.76-4.09c-1.18-1.17-2.57-2.08-4.16-2.72c-1.6-0.64-3.33-0.97-5.21-0.97c-1.88,0-3.61,0.32-5.21,0.97c-1.6,0.65-2.98,1.55-4.16,2.72-1.18,1.17-2.1,2.54-2.76,4.09C0.33-20.88,0-19.17,0-17.32c0,1.85,0.33,3.56,0.99,5.12c0.66,1.56,1.58,2.92,2.76,4.09s2.57,2.08,4.16,2.72c1.6,0.65,3.33,0.97,5.21,0.97C14.99-4.42,16.73-4.74,18.33-5.39z M8.22-6.05C6.71-6.67,5.4-7.53,4.27-8.64s-1.99-2.4-2.61-3.88c-0.62-1.47-0.93-3.08-0.93-4.81s0.31-3.33,0.93-4.81C2.28-23.6,3.15-24.89,4.27-26c1.12-1.11,2.44-1.97,3.95-2.59c1.51-0.62,3.14-0.93,4.9-0.93c1.75,0,3.39,0.31,4.9,0.93c1.51,0.62,2.83,1.49,3.95,2.59c1.12,1.11,1.99,2.4,2.61,3.87c0.62,1.47,0.93,3.08,0.93,4.81s-0.31,3.33-0.93,4.81c-0.62,1.48-1.49,2.77-2.61,3.88s-2.44,1.97-3.95,2.59c-1.51,0.62-3.14,0.93-4.9,0.93C11.37-5.12,9.73-5.43,8.22-6.05z M27.33-2.78l-0.51-0.51c-1.44,1.73-3.2,2.59-5.3,2.59c-0.76,0-1.53-0.15-2.32-0.46c-0.79-0.3-1.6-0.77-2.41-1.39c-0.81-0.62-1.64-1.38-2.46-2.28l-0.95,0.18c0.78,0.8,1.52,1.5,2.21,2.08c0.69,0.59,1.38,1.07,2.05,1.44c0.67,0.38,1.32,0.66,1.95,0.84C20.22-0.09,20.87,0,21.52,0C23.89,0,25.82-0.93,27.33-2.78z M27.2-2.63l7.24-9.35h-0.18l7.24,9.35h0.95l-7.82-9.98l-0.04,0.44l7.31-9.36h-0.88l-6.83,8.77h0.29l-6.83-8.77h-0.91l7.23,9.21L34-12.57l-7.71,9.94H27.2z'/%3E%3C/svg%3E");
+            background-size: 84px 60px;
+            animation: mover-patron 100s linear infinite;
+        }
+
+        .dark .bg-grid-light {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='84' height='60' viewBox='0 -30.22 42.44 30.22'%3E%3Cpath fill='%23ffffff' fill-opacity='0.015' d='M18.33-5.39c1.6-0.64,2.98-1.55,4.16-2.72c1.18-1.17,2.1-2.53,2.76-4.09c0.66-1.56,0.99-3.26,0.99-5.12c0-1.85-0.33-3.56-0.99-5.12c-0.66-1.56-1.58-2.92-2.76-4.09c-1.18-1.17-2.57-2.08-4.16-2.72c-1.6-0.64-3.33-0.97-5.21-0.97c-1.88,0-3.61,0.32-5.21,0.97c-1.6,0.65-2.98,1.55-4.16,2.72-1.18,1.17-2.1,2.54-2.76,4.09C0.33-20.88,0-19.17,0-17.32c0,1.85,0.33,3.56,0.99,5.12c0.66,1.56,1.58,2.92,2.76,4.09s2.57,2.08,4.16,2.72c1.6,0.65,3.33,0.97,5.21,0.97C14.99-4.42,16.73-4.74,18.33-5.39z M8.22-6.05C6.71-6.67,5.4-7.53,4.27-8.64s-1.99-2.4-2.61-3.88c-0.62-1.47-0.93-3.08-0.93-4.81s0.31-3.33,0.93-4.81C2.28-23.6,3.15-24.89,4.27-26c1.12-1.11,2.44-1.97,3.95-2.59c1.51-0.62,3.14-0.93,4.9-0.93c1.75,0,3.39,0.31,4.9,0.93c1.51,0.62,2.83,1.49,3.95,2.59c1.12,1.11,1.99,2.4,2.61,3.87c0.62,1.47,0.93,3.08,0.93,4.81s-0.31,3.33-0.93,4.81c-0.62,1.48-1.49,2.77-2.61,3.88s-2.44,1.97-3.95,2.59c-1.51,0.62-3.14,0.93-4.9,0.93C11.37-5.12,9.73-5.43,8.22-6.05z M27.33-2.78l-0.51-0.51c-1.44,1.73-3.2,2.59-5.3,2.59c-0.76,0-1.53-0.15-2.32-0.46c-0.79-0.3-1.6-0.77-2.41-1.39c-0.81-0.62-1.64-1.38-2.46-2.28l-0.95,0.18c0.78,0.8,1.52,1.5,2.21,2.08c0.69,0.59,1.38,1.07,2.05,1.44c0.67,0.38,1.32,0.66,1.95,0.84C20.22-0.09,20.87,0,21.52,0C23.89,0,25.82-0.93,27.33-2.78z M27.2-2.63l7.24-9.35h-0.18l7.24,9.35h0.95l-7.82-9.98l-0.04,0.44l7.31-9.36h-0.88l-6.83,8.77h0.29l-6.83-8.77h-0.91l7.23,9.21L34-12.57l-7.71,9.94H27.2z'/%3E%3C/svg%3E");
+        }
+        
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        .dark ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 10px; }
+        .dark ::-webkit-scrollbar-thumb { background-color: #334155; }
+        ::-webkit-scrollbar-thumb:hover { background-color: #690991; }
+    </style>
+</head>
+<body class="bg-gray-50 dark:bg-darkBg text-gray-800 dark:text-gray-100 min-h-screen flex flex-col bg-grid-light transition-colors">
+
+    <!-- BARRA SUPERIOR DE NAVEGACIÓN DEL DASHBOARD -->
+    <header class="w-full bg-white/80 dark:bg-darkCard/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50 px-6 py-4 flex justify-between items-center">
+        
+        <div class="flex items-center gap-4">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1383.43 502.29" class="h-8 md:h-10 w-auto text-[#690991] dark:text-white fill-current transition-colors">
+                <g id="OBJECTS">
+                    <path d="M832.9,305.26a22.91,22.91,0,0,1-9.7-2.11,31.17,31.17,0,0,1-9.23-7l-.12-.14c.31-.11.63-.21.94-.33a86.19,86.19,0,0,0,28.63-17.77,84,84,0,0,0,0-122,86.35,86.35,0,0,0-28.63-17.77,107.54,107.54,0,0,0-72.59,0A86.26,86.26,0,0,0,713.33,156a82.12,82.12,0,0,0-19.05,27,88.12,88.12,0,0,0,0,67.79,82.33,82.33,0,0,0,19.05,27,86.4,86.4,0,0,0,28.87,17.88,94.73,94.73,0,0,0,18.46,4.9q8.4,8.61,15.56,15a106,106,0,0,0,18.23,13.33A71.35,71.35,0,0,0,812.33,336,83.42,83.42,0,0,0,832,338.22q28.75,0,45.82-20.57L857.68,293.8Q846.46,305.25,832.9,305.26Zm-95.26-69.2a56.36,56.36,0,0,1,0-38.45A44.78,44.78,0,0,1,747,182.88a40.26,40.26,0,0,1,14-9.47,48,48,0,0,1,34.83,0,40.39,40.39,0,0,1,14,9.47,44.92,44.92,0,0,1,9.35,14.73,56.21,56.21,0,0,1,0,38.45,44.5,44.5,0,0,1-9.35,14.84,40.12,40.12,0,0,1-14,9.47,48,48,0,0,1-34.83,0,40,40,0,0,1-14-9.47A44.36,44.36,0,0,1,737.64,236.06Z"/>
+                    <polygon points="1011.74 172.01 964.75 172.01 941.41 204.05 918.93 172.01 868.9 172.01 915.76 235.33 867.5 298.71 915.66 298.71 939.88 265.55 962.64 298.71 1013.37 298.71 964.99 233.81 1011.74 172.01"/>
+                    <path d="M1119.38,184.05q-17-14.15-47.8-14.15a120.84,120.84,0,0,0-30,3.86,85.9,85.9,0,0,0-25.83,10.87l15,30.16a49.19,49.19,0,0,1,15.89-8.07A61.91,61.91,0,0,1,1065,203.8q14,0,20.45,5.73c3.9,3.47,6,8.27,6.36,14.37h-25.17q-19.64,0-32,4.56t-18.35,13.09a34.47,34.47,0,0,0-6,20.22,37.07,37.07,0,0,0,5.49,19.88,37.63,37.63,0,0,0,16,14q10.52,5.15,25.71,5.14,16.59,0,26.77-6.66A31,31,0,0,0,1095,282.27v16.44h41.38V228.35Q1136.33,198.19,1119.38,184.05Zm-36.23,85.09a24.92,24.92,0,0,1-13.21,3.62q-7.71,0-12.16-3.5a12.17,12.17,0,0,1-.11-18.71q4.32-3.5,15.07-3.5h19.17v11A21.17,21.17,0,0,1,1083.15,269.14Z"/>
+                    <path d="M1281,201.23a62.7,62.7,0,0,0-25.37-23q-16.25-8.3-37.05-8.3t-36.93,8.3a63.67,63.67,0,0,0-25.37,23q-9.24,14.73-9.23,33.9t9.23,34a64.14,64.14,0,0,0,25.37,23.26q16.13,8.42,36.93,8.41t37.05-8.41A63.16,63.16,0,0,0,1281,269.14q9.12-14.85,9.11-34T1281,201.23Zm-39.27,50.38a24.67,24.67,0,0,1-9.47,10.4,26.46,26.46,0,0,1-13.68,3.51,26,26,0,0,1-13.44-3.51,25.36,25.36,0,0,1-9.58-10.4,35,35,0,0,1-3.63-16.48q0-9.58,3.63-16.25a25.21,25.21,0,0,1,23-13.68,26.46,26.46,0,0,1,13.68,3.51,25,25,0,0,1,9.47,10.17q3.49,6.66,3.5,16.25A36.08,36.08,0,0,1,1241.76,251.61Z"/>
+                </g>
+            </svg>
+            <div class="border-l-2 border-gray-300 dark:border-gray-600 pl-3">
+                <span id="company-badge" class="block text-xs text-gray-500 dark:text-gray-400 font-medium">Empresa</span>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-4">
+            <!-- Saludo de Usuario -->
+            <span id="user-greeting" class="text-sm font-semibold text-gray-700 dark:text-gray-200 hidden sm:inline">Cargando...</span>
+            
+            <!-- Botón Bilingüe ES / EN -->
+            <button id="lang-toggle" class="text-xs font-bold text-gray-500 dark:text-gray-400 hover:text-[#690991] dark:hover:text-white transition-colors px-2.5 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-darkCard shadow-sm">
+                ES <span class="opacity-40">|</span> EN
+            </button>
+
+            <!-- Botón Tema (Claro/Oscuro) -->
+            <button id="theme-toggle" class="p-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:text-[#690991] transition shadow-sm">
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
+            </button>
+
+            <!-- Botón Cerrar Sesión -->
+            <button onclick="logout()" data-i18n="dash-logout" class="bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-500 hover:text-white px-4 py-2 rounded-xl text-sm font-semibold transition">
+                Cerrar Sesión
+            </button>
+        </div>
+    </header>
+
+    <!-- CONTENIDO PRINCIPAL DEL DASHBOARD -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-6 space-y-8">
+        
+        <!-- BIENVENIDA -->
+        <div class="bg-white dark:bg-darkCard p-8 rounded-[28px] border border-gray-200 dark:border-gray-700 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div>
+                <h1 data-i18n="dash-title" class="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">Panel de Control</h1>
+                <p data-i18n="dash-subtitle" class="text-gray-500 dark:text-gray-400 text-sm mt-1">Supervisa las métricas de tus agentes inteligentes y chats activos en tiempo real.</p>
+            </div>
+            <div class="flex items-center gap-2 bg-green-500/10 text-green-600 dark:text-green-400 px-4 py-2 rounded-full text-xs font-bold border border-green-500/20">
+                <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                <span data-i18n="dash-agent-online" class="hidden sm:inline">Conectado con DB</span>
+                <span class="sm:hidden">DB OK</span>
+            </div>
+        </div>
+
+        <!-- TARJETAS DE MÉTRICAS CONECTADAS -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div class="bg-white dark:bg-darkCard p-6 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm">
+                <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Consumo de IA</p>
+                <h3 id="dash-mensajes" class="text-3xl font-bold text-[#690991] dark:text-[#c75ced] mt-2">Cargando...</h3>
+                <span class="text-xs text-gray-500 font-semibold mt-1 inline-block">Mensajes utilizados</span>
+            </div>
+            <div class="bg-white dark:bg-darkCard p-6 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm">
+                <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Plan Actual</p>
+                <h3 id="dash-plan" class="text-3xl font-bold text-[#690991] dark:text-[#c75ced] mt-2">...</h3>
+                <span class="text-xs text-blue-500 font-semibold mt-1 inline-block">Suscripción activa</span>
+            </div>
+            <div class="bg-white dark:bg-darkCard p-6 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm">
+                <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Estado del Agente</p>
+                <h3 id="dash-agente" class="text-3xl font-bold text-[#690991] dark:text-[#c75ced] mt-2">...</h3>
+                <span class="text-xs text-green-500 font-semibold mt-1 inline-block">Estado Operativo</span>
+            </div>
+            <div class="bg-white dark:bg-darkCard p-6 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm">
+                <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Integraciones</p>
+                <h3 id="dash-sistemas" class="text-xl font-bold text-[#690991] dark:text-[#c75ced] mt-4">...</h3>
+                <span class="text-xs text-green-500 font-semibold mt-1 inline-block">Bases de datos</span>
+            </div>
+        </div>
+
+        <!-- SECCIÓN DE CHATS EN VIVO (SIMULACIÓN ESTRUCTURAL) -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="bg-white dark:bg-darkCard p-6 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm lg:col-span-1">
+                <h3 data-i18n="dash-active-conv" class="font-bold text-lg mb-4 text-gray-900 dark:text-white">Conversaciones Activas</h3>
+                <div class="space-y-3">
+                    <div class="p-3 bg-gray-50 dark:bg-gray-800 rounded-xl cursor-pointer hover:border-[#690991] border border-transparent transition">
+                        <div class="flex justify-between items-center">
+                            <span class="font-semibold text-sm">Cliente WhatsApp #8492</span>
+                            <span data-i18n="dash-active" class="text-xs text-green-500 font-medium">Activo</span>
+                        </div>
+                        <p data-i18n="dash-msg1" class="text-xs text-gray-500 dark:text-gray-400 mt-1 truncate">Consultando disponibilidad de stock...</p>
+                    </div>
+                    <div class="p-3 bg-gray-50 dark:bg-gray-800 rounded-xl cursor-pointer hover:border-[#690991] border border-transparent transition">
+                        <div class="flex justify-between items-center">
+                            <span class="font-semibold text-sm">Cliente Instagram #3310</span>
+                            <span data-i18n="dash-5m" class="text-xs text-gray-400 font-medium">Hace 5m</span>
+                        </div>
+                        <p data-i18n="dash-msg2" class="text-xs text-gray-500 dark:text-gray-400 mt-1 truncate">Proceso de pago completado con éxito.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white dark:bg-darkCard p-6 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm lg:col-span-2 flex flex-col h-[350px]">
+                <h3 data-i18n="dash-ai-flow" class="font-bold text-lg mb-4 text-gray-900 dark:text-white">Flujo del Agente IA (En Vivo)</h3>
+                <div class="flex-1 bg-gray-50 dark:bg-gray-800/50 rounded-xl p-4 overflow-y-auto space-y-3 border border-gray-100 dark:border-gray-700/50">
+                    <div class="flex items-start gap-2">
+                        <div data-i18n="dash-bot1" class="bg-[#690991] text-white text-xs px-3 py-2 rounded-xl max-w-[80%]">
+                            ¡Hola! Bienvenido. ¿En qué puedo ayudarte hoy con nuestros productos?
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-2 justify-end">
+                        <div data-i18n="dash-user1" class="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white text-xs px-3 py-2 rounded-xl max-w-[80%]">
+                            Hola, necesito saber el precio y si hay despacho disponible.
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-2">
+                        <div data-i18n="dash-bot2" class="bg-[#690991] text-white text-xs px-3 py-2 rounded-xl max-w-[80%]">
+                            ¡Claro que sí! Tenemos disponibilidad inmediata y el despacho se realiza en 24 horas. ¿Deseas procesar tu pedido?
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- BARRA FLOTANTE DE RETORNO MAESTRO (SOLO EN MODO IMPERSONACIÓN) -->
+    <div id="admin-return-bar" class="hidden fixed bottom-6 right-6 z-[999] bg-[#690991] text-white px-5 py-3 rounded-2xl shadow-2xl border border-purple-400 flex items-center gap-4 animate-bounce">
+        <div class="flex flex-col">
+            <span class="text-[10px] font-bold uppercase tracking-wider text-purple-200">Modo Impersonación</span>
+            <span id="impersonate-info" class="text-xs font-semibold">Viendo como cliente</span>
+        </div>
+        <button onclick="regresarAlAdmin()" class="bg-white text-[#690991] hover:bg-gray-100 px-4 py-2 rounded-xl text-xs font-bold transition shadow-md">
+            Cerrar esta vista
+        </button>
+    </div>
+
+<!-- SCRIPT DE VALIDACIÓN, IDIOMA Y CONTROL DE SESIÓN -->
+    <script>
+        const translations = {
+            es: {
+                "dash-logout": "Cerrar Sesión",
+                "dash-title": "Panel de Control",
+                "dash-subtitle": "Supervisa las métricas de tus agentes inteligentes y chats activos en tiempo real.",
+                "dash-agent-online": "Conectado con DB",
+                "dash-active-conv": "Conversaciones Activas",
+                "dash-active": "Activo",
+                "dash-5m": "Hace 5m",
+                "dash-msg1": "Consultando disponibilidad de stock...",
+                "dash-msg2": "Proceso de pago completado con éxito.",
+                "dash-ai-flow": "Flujo del Agente IA (En Vivo)",
+                "dash-bot1": "¡Hola! Bienvenido. ¿En qué puedo ayudarte hoy con nuestros productos?",
+                "dash-user1": "Hola, necesito saber el precio y si hay despacho disponible.",
+                "dash-bot2": "¡Claro que sí! Tenemos disponibilidad inmediata y el despacho se realiza en 24 horas. ¿Deseas procesar tu pedido?"
+            },
+            en: {
+                "dash-logout": "Log Out",
+                "dash-title": "Dashboard",
+                "dash-subtitle": "Monitor your intelligent agents' metrics and active chats in real-time.",
+                "dash-agent-online": "DB Connected",
+                "dash-active-conv": "Active Conversations",
+                "dash-active": "Active",
+                "dash-5m": "5m ago",
+                "dash-msg1": "Checking stock availability...",
+                "dash-msg2": "Payment process completed successfully.",
+                "dash-ai-flow": "AI Agent Flow (Live)",
+                "dash-bot1": "Hello! Welcome. How can I help you today with our products?",
+                "dash-user1": "Hi, I need to know the price and if shipping is available.",
+                "dash-bot2": "Sure! We have immediate availability and shipping takes 24 hours. Would you like to process your order?"
+            }
+        };
+
+        let currentLang = 'es';
+        const langToggleBtn = document.getElementById('lang-toggle');
+
+        function translatePage() {
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (translations[currentLang][key]) {
+                    el.textContent = translations[currentLang][key];
+                }
+            });
+            // LEER DE SESSION STORAGE PARA IMPERSONACIÓN
+            const isImpersonating = sessionStorage.getItem('is_impersonating') === 'true';
+            const userName = isImpersonating ? sessionStorage.getItem('impersonate_name') : localStorage.getItem('client_name');
+            document.getElementById('user-greeting').textContent = currentLang === 'es' ? `Hola, ${userName || 'Cliente'}` : `Hello, ${userName || 'Client'}`;
+            if (isImpersonating) document.getElementById('user-greeting').textContent += ' (Viendo)';
+        }
+
+        if (langToggleBtn) {
+            langToggleBtn.addEventListener('click', () => {
+                currentLang = currentLang === 'es' ? 'en' : 'es';
+                langToggleBtn.innerHTML = currentLang === 'es' ? 'ES <span class="opacity-40">|</span> EN' : '<span class="opacity-40">ES |</span> EN';
+                translatePage();
+            });
+        }
+
+        // ==========================================
+        // UTILIDAD ANTI-CSRF
+        // ==========================================
+        function getCsrfToken() {
+            const match = document.cookie.match(/(?:^|; )qxao_csrf=([^;]*)/);
+            return match ? decodeURIComponent(match[1]) : '';
+        }
+
+// VALIDACIÓN DE SESIÓN AISLADA Y EXTRACCIÓN DE DATOS
+        window.addEventListener('DOMContentLoaded', () => {
+            // USAR SESSION STORAGE PARA NO CRUZAR PESTAÑAS
+            const isImpersonating = sessionStorage.getItem('is_impersonating') === 'true';
+            const clientRole = localStorage.getItem('client_role');
+            
+            // Si no eres cliente ni administrador inspeccionando, te saca.
+            if (!isImpersonating && clientRole !== 'cliente') {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            if (isImpersonating) {
+                document.getElementById('user-greeting').textContent = `Hola, ${sessionStorage.getItem('impersonate_name')} (Viendo)`;
+                document.getElementById('company-badge').textContent = 'Modo Supervisor';
+                document.getElementById('admin-return-bar').classList.remove('hidden');
+                document.getElementById('impersonate-info').textContent = `Cuenta: ${sessionStorage.getItem('impersonate_email')}`;
+                
+                // AHORA SÍ: Traemos la data REAL de la base de datos para el Master
+                fetchClientData();
+
+            } else {
+                document.getElementById('user-greeting').textContent = `Hola, ${localStorage.getItem('client_name')}`;
+                document.getElementById('company-badge').textContent = localStorage.getItem('client_company');
+                
+                // SI ES CLIENTE REAL, TRAE SU DATA SEGURA
+                fetchClientData();
+            }
+            
+            document.getElementById('user-greeting').classList.remove('hidden');
+        });
+        
+        async function fetchClientData() {
+            try {
+                const response = await fetch('/api/client/dashboard', { credentials: 'include' });
+                
+                if (response.status === 401) {
+                    alert("Tu sesión ha caducado por seguridad. Vuelve a iniciar sesión.");
+                    logout();
+                    return;
+                }
+
+                if (response.ok) {
+                    const data = await response.json();
+                    document.getElementById('dash-mensajes').textContent = `${data.mensajes_consumidos} / ${data.limite_mensajes}`;
+                    document.getElementById('dash-plan').textContent = data.plan;
+                    document.getElementById('dash-agente').textContent = data.estado_agente;
+                    document.getElementById('dash-sistemas').textContent = (data.webhook_activo && data.inventario_activo) ? "100% Sincronizado" : "Revisar Conexión";
+                }
+            } catch (error) {}
+        }
+
+        function regresarAlAdmin() {
+            // LIMPIA SOLO LA PESTAÑA AISLADA
+            sessionStorage.removeItem('is_impersonating');
+            sessionStorage.removeItem('impersonate_email');
+            sessionStorage.removeItem('impersonate_name');
+            
+            // Intenta cerrar la pestaña si fue abierta por window.open
+            if (window.opener) {
+                window.close();
+            } else {
+                window.location.href = "admin.html";
+            }
+        }
+
+        async function logout() {
+            try {
+                // Al ser un POST, requiere el token CSRF para pasar la seguridad del backend
+                await fetch('/api/logout/client', { 
+                    method: 'POST', 
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-Token': getCsrfToken()
+                    },
+                    credentials: 'include' 
+                });
+            } catch (e) {}
+            // Limpiamos SOLO la data del cliente legítimo
+            localStorage.removeItem('client_role');
+            localStorage.removeItem('client_name');
+            localStorage.removeItem('client_company');
+            sessionStorage.clear();
+            window.location.href = 'login.html';
+        }
+
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+
+        themeToggleBtn.addEventListener('click', () => {
+            if (document.documentElement.classList.contains('dark')) {
+                document.documentElement.classList.remove('dark');
+                localStorage.setItem('color-theme', 'light');
+            } else {
+                document.documentElement.classList.add('dark');
+                localStorage.setItem('color-theme', 'dark');
+            }
+        });
+    </script>
+    </body>
+</html>

@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Qxao - Configuración del Agente IA</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://forminit.com/sdk/v1/forminit.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=Open+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body { 
+            font-family: 'Open Sans', sans-serif; 
+            background-color: #f8fafc; 
+        }
+        h1, h2, h3, h4, h5, .font-montserrat { 
+            font-family: 'Montserrat', sans-serif; 
+        }
+        
+        .step-container { 
+            display: none; 
+            animation: fadeIn 0.4s ease-in-out; 
+        }
+        .step-container.active { 
+            display: block; 
+        }
+        @keyframes fadeIn { 
+            from { opacity: 0; transform: translateY(10px); } 
+            to { opacity: 1; transform: translateY(0); } 
+        }
+        
+        input[type="text"], input[type="email"], input[type="tel"], input[type="url"], textarea, select {
+            width: 100%; 
+            padding: 10px 14px; 
+            margin-top: 6px; 
+            margin-bottom: 16px;
+            border: 1px solid #cbd5e1; 
+            border-radius: 8px; 
+            background: white;
+            font-size: 14px; 
+            color: #1e293b; 
+            transition: all 0.3s;
+        }
+        input:focus, textarea:focus, select:focus {
+            outline: none; 
+            border-color: #690991; 
+            box-shadow: 0 0 0 3px rgba(105, 9, 145, 0.1);
+        }
+
+        .dropzone {
+            border: 2px dashed #cbd5e1; 
+            border-radius: 8px; 
+            padding: 20px;
+            text-align: center; 
+            background-color: #f8fafc; 
+            cursor: pointer;
+            transition: all 0.3s ease; 
+            margin-top: 6px; 
+            margin-bottom: 16px;
+        }
+        .dropzone.dragover { 
+            border-color: #690991; 
+            background-color: #f3e8f5; 
+        }
+    </style>
+</head>
+<body class="text-slate-800 pb-20">
+
+    <header class="bg-white shadow-sm border-b border-slate-200 sticky top-0 z-50">
+        <div class="max-w-4xl mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-[#690991] rounded-lg flex items-center justify-center p-1.5 shadow-md">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 671.14 514.29" class="w-full h-full fill-current text-white">
+                        <path d="M517.17,230.82,620.56,94.91a5.48,5.48,0,0,0-4.37-8.8H536.61a5.47,5.47,0,0,0-4.4,2.21l-59.66,80.2a5.48,5.48,0,0,1-8.84-.05s-26.53-35.94-49.29-67.71c-6.48-9.05-16.38-12-27.42-13.47-21.43-2.86-53.74,1.27-53.86,1.28-193.59,24.5-296.23,135.12-317,158a5.49,5.49,0,0,0,.49,7.83c128.48,111.9,275.62,131.39,345.21,134.45,0,0,33.44.47,39.19-5.87.49-.54,1-1.06,1.43-1.64,6.59-8.79,58.92-79.17,58.92-79.17a5.48,5.48,0,0,1,8.86.08l60.27,84.29A5.48,5.48,0,0,0,535,388.8h76.61a10,10,0,0,0,8-16.07L517.16,237.45A5.49,5.49,0,0,1,517.17,230.82ZM351.73,322.93a5.35,5.35,0,0,1-6.22,1.72l0,0a84.63,84.63,0,0,1-29.27-19.37,89.65,89.65,0,0,1-19.38-30.12A102.31,102.31,0,0,1,289.88,237q0-21.06,6.94-38.33a90.09,90.09,0,0,1,19.38-29.9,84.05,84.05,0,0,1,25.07-17.57c1-.46,2.09-.93,3.16-1.35s2.06-.8,3.11-1.17a5.51,5.51,0,0,1,6.24,1.87l61.67,82.23a5.49,5.49,0,0,1,0,6.62Z"/>
+                    </svg>
+                </div>
+                <h1 class="font-montserrat font-black text-xl text-slate-800">Qxao <span class="font-medium text-slate-400">| Onboarding</span></h1>
+            </div>
+            
+            <div class="flex flex-col items-end gap-1">
+                <button type="button" id="lang-toggle" class="text-[10px] font-bold text-gray-500 hover:text-[#690991] transition-colors px-2 py-1 rounded border border-gray-200 cursor-pointer">
+                    ES <span class="opacity-40">|</span> EN
+                </button>
+                <div class="text-right">
+                    <span class="text-sm font-semibold text-slate-500 bg-slate-100 px-3 py-1 rounded-full inline-block" id="step-indicator">Paso 1 de 5</span>
+                    <span class="text-[10px] font-bold text-green-500 flex items-center justify-end gap-1 mt-1">
+                        <span class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span> 
+                        <span data-i18n="onb-saved">Progreso guardado</span>
+                    </span>
+                </div>
+            </div>
+        </div>
+        <div class="w-full bg-slate-100 h-1.5">
+            <div id="progress-bar" class="bg-[#690991] h-1.5 transition-all duration-500 ease-out" style="width: 20%;"></div>
+        </div>
+    </header>
+
+    <main class="max-w-3xl mx-auto mt-8 px-4" id="main-content">
+        
+        <form id="contact-form" enctype="multipart/form-data" novalidate>
+            
+            <!-- PASO 1 -->
+            <div class="step-container active bg-white p-8 rounded-2xl shadow-sm border border-slate-200" id="step-1">
+                <h2 data-i18n="onb-s1-title" class="text-2xl font-bold font-montserrat text-[#690991] mb-2">1. Datos Generales e Identidad</h2>
+                <p data-i18n="onb-s1-desc" class="text-slate-500 mb-6 text-sm">Definiremos cómo se presentará el Agente IA ante sus clientes.</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4">
+                    <div>
+                        <label data-i18n="onb-company" class="font-semibold text-sm">Empresa / Marca *</label>
+                        <input type="text" name="fi-sender-company" id="inp-empresa" data-i18n-ph="ph-empresa" placeholder="Ej. Tienda Qxao" required class="save-state">
+                    </div>
+                    <div>
+                        <label data-i18n="onb-resp" class="font-semibold text-sm">Responsable del Proyecto *</label>
+                        <input type="text" name="fi-sender-fullName" id="inp-responsable" data-i18n-ph="ph-resp" placeholder="Ej. Juan Pérez - CEO" required class="save-state">
+                    </div>
+                    <div>
+                        <label data-i18n="onb-email" class="font-semibold text-sm">Correo Electrónico *</label>
+                        <input type="email" name="fi-sender-email" id="inp-email" placeholder="correo@empresa.com" required class="save-state">
+                    </div>
+                    <div>
+                        <label data-i18n="onb-web" class="font-semibold text-sm">Sitio Web o Red Social</label>
+                        <input type="text" name="fi-text-website" id="inp-website" placeholder="https://..." class="save-state">
+                    </div>
+                </div>
+                <hr class="my-4 border-slate-100">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4">
+                    <div>
+                        <label data-i18n="onb-botname" class="font-semibold text-sm">Nombre del Agente IA</label>
+                        <input type="text" name="fi-text-botName" id="inp-botName" data-i18n-ph="ph-botname" placeholder="Ej. Valeria, Asesor Virtual" class="save-state">
+                    </div>
+                    <div>
+                        <label data-i18n="onb-botrol" class="font-semibold text-sm">Cargo Oficial</label>
+                        <input type="text" name="fi-text-botRol" id="inp-botRol" data-i18n-ph="ph-botrol" placeholder="Ej. Asesora de Ventas, Soporte" class="save-state">
+                    </div>
+                    <div>
+                        <label data-i18n="onb-tone" class="font-semibold text-sm">Tono de Comunicación</label>
+                        <select name="fi-select-botTone" id="inp-botTone" class="save-state">
+                            <option data-i18n="onb-t-c" value="Cercano">Cercano, amable y con emojis</option>
+                            <option data-i18n="onb-t-p" value="Profesional">Profesional, directo y corporativo</option>
+                            <option data-i18n="onb-t-t" value="Técnico">Técnico, detallado y formal</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label data-i18n="onb-treat" class="font-semibold text-sm">¿Cómo debe tratar al cliente?</label>
+                        <select name="fi-select-botTrato" id="inp-botTrato" class="save-state">
+                            <option data-i18n="onb-tr-tu" value="Tú">De 'Tú' (Informal)</option>
+                            <option data-i18n="onb-tr-ud" value="Usted">De 'Usted' (Formal)</option>
+                        </select>
+                    </div>
+                </div>
+                <label data-i18n="onb-lang" class="font-semibold text-sm mt-2 block text-[#690991]">Manejo de Idiomas</label>
+                <p data-i18n="onb-lang-d" class="text-xs text-slate-500 mb-1">Si un cliente le escribe en Inglés o Portugués...</p>
+                <select name="fi-select-idiomas" id="inp-idiomas" class="save-state">
+                    <option data-i18n="onb-lang-m" value="Multilingue">El bot debe responder fluidamente en el idioma del cliente.</option>
+                    <option data-i18n="onb-lang-e" value="Solo Español">El bot debe pedirle amablemente que hable en Español.</option>
+                </select>
+            </div>
+
+            <!-- PASO 2 -->
+            <div class="step-container bg-white p-8 rounded-2xl shadow-sm border border-slate-200" id="step-2">
+                <h2 data-i18n="onb-s2-title" class="text-2xl font-bold font-montserrat text-[#690991] mb-2">2. Operación y Perfil Comercial</h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 mb-4">
+                    <div>
+                        <label data-i18n="onb-b2b" class="font-semibold text-sm text-[#690991]">Tipo de Público (B2B / B2C)</label>
+                        <p data-i18n="onb-b2b-d" class="text-xs text-slate-500 mb-1">¿Venden a clientes finales, mayoristas o ambos?</p>
+                        <textarea name="fi-text-tipoPublico" id="inp-tipoPublico" rows="2" class="save-state" data-i18n-ph="ph-b2b" placeholder="Ej: Vendemos al detal, pero si piden más de 12 piezas, hay precios al mayor."></textarea>
+                    </div>
+                    <div>
+                        <label data-i18n="onb-suc" class="font-semibold text-sm text-[#690991]">Sucursales o Sedes</label>
+                        <p data-i18n="onb-suc-d" class="text-xs text-slate-500 mb-1">¿Tienen una o varias ubicaciones?</p>
+                        <textarea name="fi-text-sucursales" id="inp-sucursales" rows="2" class="save-state" data-i18n-ph="ph-suc" placeholder="Ej: Tiendas en Valencia y Maracay (El bot debe preguntar la ciudad)."></textarea>
+                    </div>
+                </div>
+                
+                <hr class="my-4 border-slate-100">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 mb-4">
+                    <div>
+                        <label data-i18n="onb-waBot" class="font-semibold text-sm">WhatsApp del Bot IA *</label>
+                        <input type="tel" name="fi-text-waBot" id="inp-waBot" placeholder="+58 414..." required class="save-state">
+                    </div>
+                    <div>
+                        <label data-i18n="onb-waHum" class="font-semibold text-sm">WhatsApp Atención Humana</label>
+                        <input type="tel" name="fi-text-waHumano" id="inp-waHumano" placeholder="+58 412..." class="save-state">
+                    </div>
+                </div>
+                
+                <label data-i18n="onb-arq" class="font-semibold text-sm">Estructura del chat</label>
+                <div class="space-y-2 mb-4">
+                    <label class="flex items-center gap-2 text-sm"><input type="radio" name="fi-radio-arquitectura" value="Mismo Numero" class="text-[#690991]" checked> <span data-i18n="onb-arq-1">El bot y el humano operan en el mismo número.</span></label>
+                    <label class="flex items-center gap-2 text-sm"><input type="radio" name="fi-radio-arquitectura" value="Numeros Separados" class="text-[#690991]"> <span data-i18n="onb-arq-2">Números separados (El bot transfiere el chat).</span></label>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4">
+                    <div>
+                        <label data-i18n="onb-hours" class="font-semibold text-sm">Horarios de Atención</label>
+                        <input type="text" name="fi-text-horario" id="inp-horario" data-i18n-ph="ph-horario" placeholder="Ej. Lunes a Viernes 9am - 6pm" class="save-state">
+                    </div>
+                    <div>
+                        <label data-i18n="onb-redes" class="font-semibold text-sm">Redes Sociales Oficiales</label>
+                        <input type="text" name="fi-text-redes" id="inp-redes" data-i18n-ph="ph-redes" placeholder="Ej: IG: @miempresa" class="save-state">
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4">
+                    <div>
+                        <label data-i18n="onb-ubi" class="font-semibold text-sm text-[#690991]">Ubicación Física (Punto de Venta)</label>
+                        <p data-i18n="onb-ubi-d" class="text-xs text-slate-500 mb-1">Dirección, referencias o link de Maps.</p>
+                        <textarea name="fi-text-ubicacion" id="inp-ubicacion" rows="2" class="save-state" data-i18n-ph="ph-ubi" placeholder="Ej: Av. Principal, Nivel 1. Ref: Frente al banco."></textarea>
+                    </div>
+                    <div>
+                        <label data-i18n="onb-envios" class="font-semibold text-sm text-[#690991]">Costos y Tiempos de Envío (Delivery)</label>
+                        <p data-i18n="onb-envios-d" class="text-xs text-slate-500 mb-1">Costo de motorizado y agencias.</p>
+                        <textarea name="fi-text-envios" id="inp-envios" rows="2" class="save-state" data-i18n-ph="ph-envios" placeholder="Ej: Delivery gratis en la ciudad. Nacional por MRW."></textarea>
+                    </div>
+                </div>
+
+                <hr class="my-4 border-slate-100">
+                <label data-i18n="onb-prod" class="font-semibold text-sm">Descripción General del Producto/Servicio</label>
+                <textarea name="fi-text-producto" id="inp-producto" data-i18n-ph="ph-producto" rows="2" placeholder="¿Qué venden? Describa brevemente su negocio..." class="save-state"></textarea>
+
+                <label data-i18n="onb-cat" class="font-semibold text-sm mt-4 text-[#690991] block">Subir Catálogos o Listas de Precios (PDF/Excel)</label>
+                <div data-i18n="onb-cat-d1" class="text-xs text-slate-500 mb-2">Arrastre sus archivos aquí. Serán enviados de forma segura a nuestro servidor.</div>
+                <div id="dropzone" class="dropzone">
+                    <svg class="mx-auto h-10 w-10 text-slate-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
+                    <span data-i18n="onb-cat-d2" class="text-sm font-medium text-slate-600">Haz clic para subir o arrastra los archivos aquí</span>
+                    <input type="file" name="fi-file-catalogos[]" id="fileInput" multiple class="hidden" accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.png,.jpg,.jpeg">
+                </div>
+                <ul id="file-list" class="text-xs text-slate-600 mt-2 space-y-1 mb-4"></ul>
+                
+                <hr class="my-4 border-slate-100">
+                <label data-i18n="onb-pol" class="font-semibold text-sm">Políticas o Garantías de la Empresa</label>
+                <textarea name="fi-text-garantias" id="inp-garantias" data-i18n-ph="ph-garantias" rows="2" placeholder="Ej. Ofrecemos 30 días de garantía por defectos de fábrica." class="save-state"></textarea>
+                <label data-i18n="onb-pol-exp" class="font-semibold text-sm mt-2 block">Explique detalladamente cómo funciona su política:</label>
+                <textarea name="fi-text-explicacion_garantia" id="inp-explicacion_garantia" data-i18n-ph="ph-pol-exp" rows="3" class="save-state" placeholder="Ej: Si el cliente pide garantía, el bot debe pedirle foto..."></textarea>
+                <label data-i18n="onb-pol-doc" class="font-semibold text-sm text-[#690991] mt-4 block">Subir Documentos de Políticas (Opcional)</label>
+                <input type="file" name="fi-file-politicas[]" multiple class="w-full text-sm text-slate-600 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-bold file:bg-purple-50 file:text-[#690991] hover:file:bg-purple-100 transition mb-2">
+            </div>
+
+            <!-- PASO 3 -->
+            <div class="step-container bg-white p-8 rounded-2xl shadow-sm border border-slate-200" id="step-3">
+                <h2 data-i18n="onb-s3-title" class="text-2xl font-bold font-montserrat text-[#690991] mb-2">3. Estrategia de Ventas y Pagos</h2>
+                
+                <label data-i18n="onb-lead" class="font-semibold text-sm text-[#690991]">Calificación de Leads (¿Qué debe preguntar el bot antes de vender?)</label>
+                <textarea name="fi-text-preguntas_bot" id="inp-preguntas_bot" data-i18n-ph="ph-lead" rows="2" class="save-state mb-4" placeholder="Ej: Antes de dar precio, el bot debe preguntar: 1. Ciudad, 2. Presupuesto."></textarea>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 mb-4">
+                    <div>
+                        <label data-i18n="onb-obj" class="font-semibold text-sm text-[#690991]">Objeciones Comunes (Manejo del "No")</label>
+                        <p data-i18n="onb-obj-d" class="text-xs text-slate-500 mb-1">¿Qué responde el bot si dicen "Está muy caro"?</p>
+                        <textarea name="fi-text-objeciones" id="inp-objeciones" data-i18n-ph="ph-objeciones" rows="2" class="save-state" placeholder="Ej: Responder resaltando nuestra garantía."></textarea>
+                    </div>
+                    <div>
+                        <label data-i18n="onb-promo" class="font-semibold text-sm text-[#690991]">Promociones Activas y Upselling</label>
+                        <p data-i18n="onb-promo-d" class="text-xs text-slate-500 mb-1">¿Hay combos o ganchos que el bot deba ofrecer?</p>
+                        <textarea name="fi-text-promociones" id="inp-promociones" data-i18n-ph="ph-promo" rows="2" class="save-state" placeholder="Ej: Siempre recuerda que la 3ra pieza tiene 50% de descuento."></textarea>
+                    </div>
+                    <div>
+                        <label data-i18n="onb-faq" class="font-semibold text-sm text-[#690991]">Top Preguntas Frecuentes (FAQ)</label>
+                        <textarea name="fi-text-faq" id="inp-faq" data-i18n-ph="ph-faq" rows="2" class="save-state" placeholder="1. ¿Hacen instalación? (R: Sí). 2. ¿Tienen apartado? (R: Sí)."></textarea>
+                    </div>
+                    <div>
+                        <label data-i18n="onb-stock" class="font-semibold text-sm text-[#690991]">Manejo de Falta de Inventario</label>
+                        <textarea name="fi-text-stock" id="inp-stock" data-i18n-ph="ph-stock" rows="2" class="save-state" placeholder="Ej: Si no hay, ofrecer alternativas de la misma marca."></textarea>
+                    </div>
+                </div>
+
+                <label data-i18n="onb-fidel" class="font-semibold text-sm text-[#690991]">Trato a Clientes Recurrentes</label>
+                <p data-i18n="onb-fidel-d" class="text-xs text-slate-500 mb-1">Si detecta que el cliente ya compró, ¿cómo reacciona?</p>
+                <textarea name="fi-text-fidelizacion" id="inp-fidelizacion" data-i18n-ph="ph-fidel" rows="2" class="save-state mb-4" placeholder="Ej: Saludarlo por su nombre y preguntarle si desea repetir su pedido."></textarea>
+
+                <hr class="my-6 border-slate-100">
+                <h3 data-i18n="onb-pay-t" class="font-bold text-lg text-slate-800 mb-3">Pasarelas de Pago y Apartados</h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4">
+                    <div>
+                        <label data-i18n="onb-paym" class="font-semibold text-sm">Métodos de Pago Aceptados</label>
+                        <input type="text" name="fi-text-metodosPago" id="inp-metodosPago" data-i18n-ph="ph-metodosPago" placeholder="Ej. Zelle, Binance, Pago Móvil" class="save-state">
+                    </div>
+                    <div>
+                        <label data-i18n="onb-book" class="font-semibold text-sm">Link de Agendamiento (Opcional)</label>
+                        <input type="text" name="fi-text-citas" id="inp-citas" data-i18n-ph="ph-citas" placeholder="Ej. https://calendly.com/mi-empresa" class="save-state">
+                    </div>
+                </div>
+                
+                <label data-i18n="onb-bank" class="font-semibold text-sm">Datos Bancarios a enviar por la IA</label>
+                <textarea name="fi-text-datosPago" id="inp-datosPago" data-i18n-ph="ph-datosPago" rows="2" placeholder="Escriba aquí los números de cuenta o links exactos." class="save-state mb-4"></textarea>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 mb-4">
+                    <div>
+                        <label data-i18n="onb-flujo" class="font-semibold text-sm text-[#690991]">Flujo de Verificación (El "Capture")</label>
+                        <p data-i18n="onb-flujo-d" class="text-xs text-slate-500 mb-1">¿Qué responde el bot al recibir la captura de pago?</p>
+                        <textarea name="fi-text-flujo_pago" id="inp-flujo_pago" data-i18n-ph="ph-flujo" rows="2" class="save-state" placeholder="Ej: 'Recibido, nuestro equipo validará tu pago...'"></textarea>
+                    </div>
+                    <div>
+                        <label data-i18n="onb-apart" class="font-semibold text-sm text-[#690991]">Validez de Precios y Apartados</label>
+                        <p data-i18n="onb-apart-d" class="text-xs text-slate-500 mb-1">¿Por cuánto tiempo se congela el precio?</p>
+                        <textarea name="fi-text-apartados" id="inp-apartados" data-i18n-ph="ph-apart" rows="2" class="save-state" placeholder="Ej: Solo apartamos mercancía por 12 horas."></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PASO 4 -->
+            <div class="step-container bg-white p-8 rounded-2xl shadow-sm border border-slate-200" id="step-4">
+                <h2 data-i18n="onb-s4-title" class="text-2xl font-bold font-montserrat text-red-600 mb-2">4. Seguridad e Integraciones</h2>
+                
+                <label data-i18n="onb-red" class="font-semibold text-sm text-red-600">Líneas Rojas (TOTALMENTE PROHIBIDO)</label>
+                <p data-i18n="onb-red-d" class="text-xs text-slate-500 mb-1">¿Qué es lo que la IA NUNCA debe decir o hacer?</p>
+                <textarea name="fi-text-prohibido" id="inp-prohibido" data-i18n-ph="ph-prohibido" rows="3" class="bg-red-50 border-red-200 save-state mb-4" placeholder="Ej. NUNCA dar descuentos, NUNCA prometer envíos el mismo día."></textarea>
+                
+                <label data-i18n="onb-escal" class="font-semibold text-sm">Criterios de Escalamiento a un Humano</label>
+                <p data-i18n="onb-escal-d" class="text-xs text-slate-500 mb-1">¿En qué momento exacto el bot debe llamar a un asesor?</p>
+                <textarea name="fi-text-escalamiento" id="inp-escalamiento" data-i18n-ph="ph-escalamiento" rows="2" class="save-state" placeholder="Ej. 1. Cuando el cliente hace un reclamo."></textarea>
+                
+                <hr class="my-6 border-slate-100">
+                
+                <label data-i18n="onb-tools" class="font-semibold text-sm text-[#690991]">Herramientas a Integrar (CRMs, Sheets, ERP)</label>
+                <p data-i18n="onb-tools-d" class="text-xs text-slate-500 mb-1">Mencione si usa algún software externo donde el bot deba guardar información.</p>
+                <textarea name="fi-text-integraciones" id="inp-integraciones" data-i18n-ph="ph-integraciones" rows="2" class="save-state mb-4" placeholder="Ej. Queremos que cada pedido se guarde automáticamente en un Google Sheet."></textarea>
+                
+                <label data-i18n="onb-extract" class="font-semibold text-sm text-[#690991]">Datos a Extraer obligatoriamente</label>
+                <p data-i18n="onb-extract-d" class="text-xs text-slate-500 mb-1">¿Qué información es vital que el bot recaude?</p>
+                <textarea name="fi-text-datosExtraer" id="inp-datosExtraer" data-i18n-ph="ph-datosExtraer" rows="2" class="save-state mb-4" placeholder="Ej. El bot siempre debe pedir el Nombre, Correo y Documento."></textarea>
+                
+                <label data-i18n="onb-kpi" class="font-semibold text-sm text-[#690991]">KPIs - ¿Cómo mediremos el éxito?</label>
+                <p data-i18n="onb-kpi-d" class="text-xs text-slate-500 mb-1">Defina sus metas para enfocar el entrenamiento.</p>
+                <textarea name="fi-text-kpis" id="inp-kpis" data-i18n-ph="ph-kpis" rows="2" class="save-state" placeholder="Ej. Reducir tiempo de atención y subir reservas."></textarea>
+            </div>
+
+            <!-- PASO 5 -->
+            <div class="step-container bg-white p-8 rounded-2xl shadow-sm border border-slate-200" id="step-5">
+                <h2 data-i18n="onb-s5-title" class="text-2xl font-bold font-montserrat text-[#690991] mb-2">5. Acuerdos y Firma Legal</h2>
+                <div data-i18n="onb-nda" class="bg-slate-50 p-4 rounded-lg border border-slate-200 text-xs text-slate-600 h-32 overflow-y-auto mb-4">
+                    <strong>TÉRMINOS DE SERVICIO Y CONFIDENCIALIDAD (NDA)</strong><br><br>
+                    1. <strong>Confidencialidad:</strong> Qxao se compromete a mantener en estricta confidencialidad toda la información, catálogos y estrategias.<br>
+                    2. <strong>Uso de Datos:</strong> La información se utilizará única y exclusivamente para el entrenamiento del Agente IA.<br>
+                    3. <strong>Propiedad:</strong> El cliente declara poseer los derechos sobre la información suministrada.<br>
+                    4. <strong>Alcance:</strong> Este documento funciona como el 'Brief Arquitectónico' base.
+                </div>
+                <label class="flex items-center gap-2 mb-6 cursor-pointer">
+                    <input type="checkbox" id="inp-tos" class="w-4 h-4 text-[#690991] rounded focus:ring-[#690991]">
+                    <span data-i18n="onb-terms" class="text-sm font-semibold text-slate-700">He leído y acepto los Términos de Servicio y Acuerdos de Confidencialidad (NDA).*</span>
+                </label>
+                <div class="bg-slate-50 p-6 rounded-lg border border-slate-200">
+                    <label data-i18n="onb-sign-l" class="font-semibold text-sm block mb-1 text-[#690991]">Firma Electrónica del Responsable *</label>
+                    <p data-i18n="onb-sign-d" class="text-xs text-slate-500 mb-3">Escriba su nombre completo para estampar su firma digital y enviar la solicitud.</p>
+                    <input type="text" name="fi-text-firmaLegal" id="inp-firmaTexto" data-i18n-ph="ph-firma" placeholder="Ej. Juan Pérez" class="save-state bg-white">
+                </div>
+            </div>
+
+            <!-- BOTONERA -->
+            <div class="mt-8 flex justify-between items-center">
+                <button type="button" id="btn-prev" onclick="changeStep(-1)" data-i18n="onb-prev" class="hidden px-6 py-3 bg-slate-200 text-slate-700 font-bold rounded-xl hover:bg-slate-300 transition">← Anterior</button>
+                <div class="flex-1"></div>
+                <button type="button" id="btn-next" onclick="changeStep(1)" data-i18n="onb-next" class="px-8 py-3 bg-[#690991] text-white font-bold rounded-xl hover:bg-[#520773] shadow-lg shadow-purple-900/20 transition">Siguiente →</button>
+                <button type="submit" id="btn-submit" data-i18n="onb-submit" class="hidden px-8 py-3 bg-green-500 text-white font-bold rounded-xl hover:bg-green-600 shadow-lg shadow-green-500/30 transition items-center gap-2 opacity-50 cursor-not-allowed">
+                    Firmar y Enviar Arquitectura
+                </button>
+            </div>
+            
+            <p id="form-status" class="text-center font-bold mt-4 hidden"></p>
+        </form>
+    </main>
+
+    <!-- SCRIPT MAESTRO DE TRADUCCIÓN Y LÓGICA -->
+    <script>
+        // ==========================================
+        // DICCIONARIO DE TRADUCCIÓN COMPLETO
+        // ==========================================
+        const translations = {
+            es: {
+                "onb-step": "Paso",
+                "onb-saved": "Progreso guardado",
+                "onb-s1-title": "1. Datos Generales e Identidad",
+                "onb-s1-desc": "Definiremos cómo se presentará el Agente IA ante sus clientes.",
+                "onb-company": "Empresa / Marca *",
+                "ph-empresa": "Ej. Tienda Qxao",
+                "onb-resp": "Responsable del Proyecto *",
+                "ph-resp": "Ej. Juan Pérez - CEO",
+                "onb-email": "Correo Electrónico *",
+                "onb-web": "Sitio Web o Red Social",
+                "onb-botname": "Nombre del Agente IA",
+                "ph-botname": "Ej. Valeria, Asesor Virtual",
+                "onb-botrol": "Cargo Oficial",
+                "ph-botrol": "Ej. Asesora de Ventas, Soporte",
+                "onb-tone": "Tono de Comunicación",
+                "onb-t-c": "Cercano, amable y con emojis",
+                "onb-t-p": "Profesional, directo y corporativo",
+                "onb-t-t": "Técnico, detallado y formal",
+                "onb-treat": "¿Cómo debe tratar al cliente?",
+                "onb-tr-tu": "De 'Tú' (Informal)",
+                "onb-tr-ud": "De 'Usted' (Formal)",
+                "onb-lang": "Manejo de Idiomas",
+                "onb-lang-d": "Si un cliente le escribe en Inglés o Portugués...",
+                "onb-lang-m": "El bot debe responder fluidamente en el idioma del cliente.",
+                "onb-lang-e": "El bot debe pedirle amablemente que hable en Español.",
+                
+                "onb-s2-title": "2. Operación y Perfil Comercial",
+                "onb-b2b": "Tipo de Público (B2B / B2C)",
+                "onb-b2b-d": "¿Venden a clientes finales, mayoristas o ambos?",
+                "ph-b2b": "Ej: Vendemos al detal, pero si piden más de 12 piezas, hay precios al mayor.",
+                "onb-suc": "Sucursales o Sedes",
+                "onb-suc-d": "¿Tienen una o varias ubicaciones?",
+                "ph-suc": "Ej: Tiendas en Valencia y Maracay (El bot debe preguntar la ciudad).",
+                "onb-waBot": "WhatsApp del Bot IA *",
+                "onb-waHum": "WhatsApp Atención Humana",
+                "onb-arq": "Estructura del chat",
+                "onb-arq-1": "El bot y el humano operan en el mismo número.",
+                "onb-arq-2": "Números separados (El bot transfiere el chat).",
+                "onb-hours": "Horarios de Atención",
+                "ph-horario": "Ej. Lunes a Viernes 9am - 6pm",
+                "onb-redes": "Redes Sociales Oficiales",
+                "ph-redes": "Ej: IG: @miempresa",
+                "onb-ubi": "Ubicación Física (Punto de Venta)",
+                "onb-ubi-d": "Dirección, referencias o link de Maps.",
+                "ph-ubi": "Ej: Av. Principal, Nivel 1. Ref: Frente al banco.",
+                "onb-envios": "Costos y Tiempos de Envío (Delivery)",
+                "onb-envios-d": "Costo de motorizado y agencias.",
+                "ph-envios": "Ej: Delivery gratis en la ciudad. Nacional por MRW.",
+                "onb-prod": "Descripción General del Producto/Servicio",
+                "ph-producto": "¿Qué venden? Describa brevemente su negocio...",
+                "onb-cat": "Subir Catálogos o Listas de Precios (PDF/Excel)",
+                "onb-cat-d1": "Arrastre sus archivos aquí. Serán enviados de forma segura.",
+                "onb-cat-d2": "Haz clic para subir o arrastra los archivos aquí",
+                "onb-pol": "Políticas o Garantías",
+                "ph-garantias": "Ej. Ofrecemos 30 días de garantía por defectos de fábrica.",
+                "onb-pol-exp": "Explique detalladamente cómo funciona su política:",
+                "ph-pol-exp": "Ej: Si el cliente pide garantía, el bot debe pedirle foto...",
+                "onb-pol-doc": "Subir Documentos de Políticas (Opcional)",
+                
+                "onb-s3-title": "3. Estrategia de Ventas y Pagos",
+                "onb-lead": "Calificación de Leads (¿Qué debe preguntar el bot antes de vender?)",
+                "ph-lead": "Ej: Antes de dar precio, el bot debe preguntar: 1. Ciudad, 2. Presupuesto.",
+                "onb-obj": "Objeciones Comunes (Manejo del 'No')",
+                "onb-obj-d": "¿Qué responde el bot si dicen 'Está muy caro'?",
+                "ph-objeciones": "Ej: Responder resaltando nuestra garantía.",
+                "onb-promo": "Promociones Activas y Upselling",
+                "onb-promo-d": "¿Hay combos o ganchos que el bot deba ofrecer?",
+                "ph-promo": "Ej: Siempre recuerda que la 3ra pieza tiene 50% de descuento.",
+                "onb-faq": "Top Preguntas Frecuentes (FAQ)",
+                "ph-faq": "1. ¿Hacen instalación? (R: Sí). 2. ¿Tienen apartado? (R: Sí).",
+                "onb-stock": "Manejo de Falta de Inventario",
+                "ph-stock": "Ej: Si no hay, ofrecer alternativas de la misma marca.",
+                "onb-fidel": "Trato a Clientes Recurrentes",
+                "onb-fidel-d": "Si detecta que el cliente ya compró, ¿cómo reacciona?",
+                "ph-fidel": "Ej: Saludarlo por su nombre y preguntarle si desea repetir su pedido.",
+                "onb-pay-t": "Pasarelas de Pago y Apartados",
+                "onb-paym": "Métodos de Pago Aceptados",
+                "ph-metodosPago": "Ej. Zelle, Binance, Pago Móvil",
+                "onb-book": "Link de Agendamiento (Opcional)",
+                "ph-citas": "Ej. https://calendly.com/mi-empresa",
+                "onb-bank": "Datos Bancarios a enviar por la IA",
+                "ph-datosPago": "Escriba aquí los números de cuenta o links exactos.",
+                "onb-flujo": "Flujo de Verificación (El 'Capture')",
+                "onb-flujo-d": "¿Qué responde el bot al recibir la captura de pago?",
+                "ph-flujo": "Ej: 'Recibido, nuestro equipo validará tu pago...'",
+                "onb-apart": "Validez de Precios y Apartados",
+                "onb-apart-d": "¿Por cuánto tiempo se congela el precio?",
+                "ph-apart": "Ej: Solo apartamos mercancía por 12 horas.",
+
+                "onb-s4-title": "4. Seguridad e Integraciones",
+                "onb-red": "Líneas Rojas (TOTALMENTE PROHIBIDO)",
+                "onb-red-d": "¿Qué es lo que la IA NUNCA debe decir o hacer?",
+                "ph-prohibido": "Ej. NUNCA dar descuentos, NUNCA prometer envíos el mismo día.",
+                "onb-escal": "Criterios de Escalamiento a un Humano",
+                "onb-escal-d": "¿En qué momento exacto el bot debe llamar a un asesor?",
+                "ph-escalamiento": "Ej. 1. Cuando el cliente hace un reclamo.",
+                "onb-tools": "Herramientas a Integrar (CRMs, Sheets, ERP)",
+                "onb-tools-d": "Mencione si usa software externo donde el bot guarde información.",
+                "ph-integraciones": "Ej. Que cada pedido se guarde en un Google Sheet.",
+                "onb-extract": "Datos a Extraer obligatoriamente",
+                "onb-extract-d": "¿Qué información es vital que el bot recaude?",
+                "ph-datosExtraer": "Ej. El bot siempre debe pedir el Nombre, Correo y Documento.",
+                "onb-kpi": "KPIs - ¿Cómo mediremos el éxito?",
+                "onb-kpi-d": "Defina sus metas para enfocar el entrenamiento.",
+                "ph-kpis": "Ej. Reducir tiempo de atención y subir reservas.",
+
+                "onb-s5-title": "5. Acuerdos y Firma Legal",
+                "onb-nda": "<strong>TÉRMINOS DE SERVICIO Y CONFIDENCIALIDAD (NDA)</strong><br><br>1. <strong>Confidencialidad:</strong> Qxao se compromete a mantener en estricta confidencialidad toda la información.<br>2. <strong>Uso de Datos:</strong> Única y exclusivamente para el entrenamiento del Agente IA.<br>3. <strong>Propiedad:</strong> El cliente declara poseer los derechos sobre la información suministrada.<br>4. <strong>Alcance:</strong> Este documento funciona como el 'Brief Arquitectónico' base.",
+                "onb-terms": "He leído y acepto los Términos de Servicio y Acuerdos de Confidencialidad (NDA).*",
+                "onb-sign-l": "Firma Electrónica del Responsable *",
+                "onb-sign-d": "Escriba su nombre completo para estampar su firma digital y enviar la solicitud.",
+                "ph-firma": "Ej. Juan Pérez",
+                "onb-prev": "← Anterior",
+                "onb-next": "Siguiente →",
+                "onb-submit": "Firmar y Enviar Arquitectura",
+                "onb-alert-terms": "Debe aceptar los términos y escribir su nombre completo para firmar.",
+                "onb-alert-req": "Por favor, completa los campos obligatorios (*) antes de avanzar.",
+                "onb-success-title": "¡Arquitectura Recibida!",
+                "onb-success-desc": "Hemos recibido todos sus documentos de forma segura. El equipo de ingeniería de Qxao está procesando su expediente para la construcción del cerebro de su IA.",
+                "onb-btn-home": "← Volver al Inicio"
+            },
+            en: {
+                "onb-step": "Step",
+                "onb-saved": "Progress saved",
+                "onb-s1-title": "1. General Data & Identity",
+                "onb-s1-desc": "We will define how the AI Agent will present itself to your clients.",
+                "onb-company": "Company / Brand *",
+                "ph-empresa": "Ex. Qxao Store",
+                "onb-resp": "Project Manager *",
+                "ph-resp": "Ex. John Doe - CEO",
+                "onb-email": "Email Address *",
+                "onb-web": "Website or Social Media",
+                "onb-botname": "AI Agent Name",
+                "ph-botname": "Ex. Valerie, Virtual Advisor",
+                "onb-botrol": "Official Role",
+                "ph-botrol": "Ex. Sales Advisor, Support",
+                "onb-tone": "Tone of Voice",
+                "onb-t-c": "Friendly, approachable, corporate",
+                "onb-t-p": "Professional, direct, and corporate",
+                "onb-t-t": "Technical, detailed, and formal",
+                "onb-treat": "How should it treat the client?",
+                "onb-tr-tu": "Informal ('Tú')",
+                "onb-tr-ud": "Formal ('Usted')",
+                "onb-lang": "Language Handling",
+                "onb-lang-d": "If a client writes in English or Portuguese...",
+                "onb-lang-m": "The bot must respond fluently in the client's language.",
+                "onb-lang-e": "The bot must politely ask them to speak in Spanish.",
+                
+                "onb-s2-title": "2. Operation & Commercial Profile",
+                "onb-b2b": "Target Audience (B2B / B2C)",
+                "onb-b2b-d": "Do you sell to end consumers, wholesalers, or both?",
+                "ph-b2b": "Ex: We sell retail, but for 12+ items, we have wholesale prices.",
+                "onb-suc": "Branches or Locations",
+                "onb-suc-d": "Do you have one or multiple locations?",
+                "ph-suc": "Ex: Stores in Miami and Orlando (The bot must ask the city).",
+                "onb-waBot": "AI Bot WhatsApp *",
+                "onb-waHum": "Human Support WhatsApp",
+                "onb-arq": "Chat Architecture",
+                "onb-arq-1": "Bot and human operate on the same number.",
+                "onb-arq-2": "Separate numbers (Bot transfers the chat).",
+                "onb-hours": "Business Hours",
+                "ph-horario": "Ex. Mon - Fri 9am - 6pm",
+                "onb-redes": "Official Social Media",
+                "ph-redes": "Ex: IG: @mycompany",
+                "onb-ubi": "Physical Location (Storefront)",
+                "onb-ubi-d": "Address, landmarks or Maps link.",
+                "ph-ubi": "Ex: Main Ave, Level 1. Ref: Across the bank.",
+                "onb-envios": "Shipping Costs & Times (Delivery)",
+                "onb-envios-d": "Courier costs and agencies.",
+                "ph-envios": "Ex: Free local delivery. Nationwide via FedEx.",
+                "onb-prod": "General Product/Service Description",
+                "ph-producto": "What do you sell? Briefly describe...",
+                "onb-cat": "Upload Catalogs or Price Lists (PDF/Excel)",
+                "onb-cat-d1": "Drag your files here. They will be sent securely.",
+                "onb-cat-d2": "Click to upload or drag files here",
+                "onb-pol": "Policies or Guarantees",
+                "ph-garantias": "Ex. We offer a 30-day warranty for factory defects.",
+                "onb-pol-exp": "Explain your policy in detail:",
+                "ph-pol-exp": "Ex: If the client asks for a warranty, the bot must request a photo...",
+                "onb-pol-doc": "Upload Policy Documents (Optional)",
+                
+                "onb-s3-title": "3. Sales Strategy & Payments",
+                "onb-lead": "Lead Qualification (What should the bot ask before selling?)",
+                "ph-lead": "Ex: Before pricing, ask: 1. City, 2. Budget.",
+                "onb-obj": "Common Objections (Handling 'No')",
+                "onb-obj-d": "What does the bot say if they say 'Too expensive'?",
+                "ph-objeciones": "Ex: Reply highlighting our warranty.",
+                "onb-promo": "Active Promotions & Upselling",
+                "onb-promo-d": "Are there combos or hooks the bot should offer?",
+                "ph-promo": "Ex: Always remind that the 3rd item is 50% off.",
+                "onb-faq": "Top Frequently Asked Questions (FAQ)",
+                "ph-faq": "1. Do you install? (A: Yes). 2. Layaway? (A: Yes).",
+                "onb-stock": "Out of Stock Handling",
+                "ph-stock": "Ex: If out of stock, offer similar brand alternatives.",
+                "onb-fidel": "Returning Customers Handling",
+                "onb-fidel-d": "If it detects a past buyer, how does it react?",
+                "ph-fidel": "Ex: Greet by name and ask if they want to repeat the order.",
+                "onb-pay-t": "Payment Gateways & Layaways",
+                "onb-paym": "Accepted Payment Methods",
+                "ph-metodosPago": "Ex. Zelle, Crypto, Wire Transfer",
+                "onb-book": "Scheduling Link (Optional)",
+                "ph-citas": "Ex. https://calendly.com/my-company",
+                "onb-bank": "Bank Details for AI to send",
+                "ph-datosPago": "Type the exact account numbers or links here.",
+                "onb-flujo": "Verification Flow (The 'Screenshot')",
+                "onb-flujo-d": "What does the bot reply upon receiving a payment screenshot?",
+                "ph-flujo": "Ex: 'Received, our team will validate your payment...'",
+                "onb-apart": "Price Validity & Layaways",
+                "onb-apart-d": "For how long is the price frozen?",
+                "ph-apart": "Ex: We only hold items for 12 hours.",
+
+                "onb-s4-title": "4. Security & Integrations",
+                "onb-red": "Red Lines (STRICTLY PROHIBITED)",
+                "onb-red-d": "What must the AI NEVER say or do?",
+                "ph-prohibido": "Ex. NEVER give discounts, NEVER promise same-day delivery.",
+                "onb-escal": "Escalation Criteria to a Human",
+                "onb-escal-d": "At what exact moment must the bot call an advisor?",
+                "ph-escalamiento": "Ex. 1. When the client makes a complaint.",
+                "onb-tools": "Tools to Integrate (CRMs, Sheets, ERP)",
+                "onb-tools-d": "Mention any external software where the bot should save info.",
+                "ph-integraciones": "Ex. Save every order in a Google Sheet.",
+                "onb-extract": "Mandatory Data to Extract",
+                "onb-extract-d": "What vital info must the bot collect?",
+                "ph-datosExtraer": "Ex. The bot must always ask for Name, Email, and ID.",
+                "onb-kpi": "KPIs - How will we measure success?",
+                "onb-kpi-d": "Define your goals to focus the training.",
+                "ph-kpis": "Ex. Reduce response time and increase bookings.",
+
+                "onb-s5-title": "5. Agreements & Legal Signature",
+                "onb-nda": "<strong>TERMS OF SERVICE AND CONFIDENTIALITY (NDA)</strong><br><br>1. <strong>Confidentiality:</strong> Qxao is committed to keeping all information strictly confidential.<br>2. <strong>Data Usage:</strong> Solely and exclusively for training the AI Agent.<br>3. <strong>Ownership:</strong> The client declares ownership of the provided information.<br>4. <strong>Scope:</strong> This document serves as the core 'Architectural Brief'.",
+                "onb-terms": "I have read and accept the Terms of Service and Confidentiality Agreements (NDA).*",
+                "onb-sign-l": "Manager's Electronic Signature *",
+                "onb-sign-d": "Type your full name to stamp your digital signature and submit the request.",
+                "ph-firma": "Ex. John Doe",
+                "onb-prev": "← Previous",
+                "onb-next": "Next →",
+                "onb-submit": "Sign & Submit Architecture",
+                "onb-alert-terms": "You must accept the terms and type your full name to sign.",
+                "onb-alert-req": "Please complete the mandatory fields (*) before proceeding.",
+                "onb-success-title": "Architecture Received!",
+                "onb-success-desc": "We have securely received all your documents. The Qxao engineering team is processing your file.",
+                "onb-btn-home": "← Back to Home"
+            }
+        };
+
+        let currentLang = 'es';
+        const langToggleBtn = document.getElementById('lang-toggle');
+
+        function translatePage() {
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (translations[currentLang][key]) {
+                    el.innerHTML = translations[currentLang][key];
+                }
+            });
+            document.querySelectorAll('[data-i18n-ph]').forEach(el => {
+                const key = el.getAttribute('data-i18n-ph');
+                if (translations[currentLang][key]) {
+                    el.placeholder = translations[currentLang][key];
+                }
+            });
+            document.getElementById('step-indicator').innerText = currentLang === 'es' ? `Paso ${currentStep} de ${totalSteps}` : `Step ${currentStep} of ${totalSteps}`;
+        }
+
+        if (langToggleBtn) {
+            langToggleBtn.addEventListener('click', () => {
+                currentLang = currentLang === 'es' ? 'en' : 'es';
+                langToggleBtn.innerHTML = currentLang === 'es' ? 'ES <span class="opacity-40">|</span> EN' : '<span class="opacity-40">ES |</span> EN';
+                translatePage();
+            });
+        }
+
+        // ==========================================
+        // LÓGICA DE NAVEGACIÓN Y WIZARD
+        // ==========================================
+        let currentStep = 1;
+        const totalSteps = 5;
+
+        function saveDraft() {
+            const data = {};
+            document.querySelectorAll('.save-state').forEach(input => data[input.id] = input.value);
+            localStorage.setItem('qxao_onboarding_draft', JSON.stringify(data));
+        }
+        function loadDraft() {
+            const draft = JSON.parse(localStorage.getItem('qxao_onboarding_draft'));
+            if (draft) { 
+                Object.keys(draft).forEach(key => { 
+                    const el = document.getElementById(key); 
+                    if(el) el.value = draft[key]; 
+                }); 
+            }
+        }
+        document.querySelectorAll('.save-state').forEach(input => { 
+            input.addEventListener('input', saveDraft); 
+            input.addEventListener('change', saveDraft); 
+        });
+
+        // Drag & Drop visual (Catálogos)
+        const dropzone = document.getElementById('dropzone');
+        const fileInput = document.getElementById('fileInput');
+        const fileListUI = document.getElementById('file-list');
+
+        dropzone.addEventListener('click', () => fileInput.click());
+        dropzone.addEventListener('dragover', (e) => { 
+            e.preventDefault(); 
+            dropzone.classList.add('dragover'); 
+        });
+        dropzone.addEventListener('dragleave', () => {
+            dropzone.classList.remove('dragover');
+        });
+        dropzone.addEventListener('drop', (e) => { 
+            e.preventDefault(); 
+            dropzone.classList.remove('dragover'); 
+            fileInput.files = e.dataTransfer.files;
+            handleFiles(fileInput.files); 
+        });
+        fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
+
+        function handleFiles(files) {
+            fileListUI.innerHTML = '';
+            Array.from(files).forEach(file => {
+                const li = document.createElement('li');
+                li.innerHTML = `• ${file.name}`;
+                fileListUI.appendChild(li);
+            });
+        }
+
+        function updateUI() {
+            document.querySelectorAll('.step-container').forEach((el, index) => {
+                el.classList.toggle('active', index + 1 === currentStep)
+            });
+            document.getElementById('btn-prev').style.display = currentStep === 1 ? 'none' : 'block';
+            
+            if (currentStep === totalSteps) {
+                document.getElementById('btn-next').style.display = 'none';
+                document.getElementById('btn-submit').style.display = 'flex';
+            } else {
+                document.getElementById('btn-next').style.display = 'block';
+                document.getElementById('btn-submit').style.display = 'none';
+            }
+            
+            document.getElementById('progress-bar').style.width = `${(currentStep / totalSteps) * 100}%`;
+            document.getElementById('step-indicator').innerText = currentLang === 'es' ? `Paso ${currentStep} de ${totalSteps}` : `Step ${currentStep} of ${totalSteps}`;
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function changeStep(direction) {
+            if (direction === 1) {
+                // Validación para avanzar de paso
+                const requiredInputs = document.querySelectorAll(`#step-${currentStep} [required]`);
+                let isValid = true;
+                requiredInputs.forEach(input => {
+                    if (!input.value.trim()) { 
+                        input.classList.add('border-red-500'); 
+                        isValid = false; 
+                    } else { 
+                        input.classList.remove('border-red-500'); 
+                    }
+                });
+                if (!isValid) return alert(translations[currentLang]['onb-alert-req']);
+            }
+            currentStep += direction;
+            updateUI();
+        }
+
+        const tosCheckbox = document.getElementById('inp-tos');
+        const firmaInput = document.getElementById('inp-firmaTexto');
+        const submitBtn = document.getElementById('btn-submit');
+        
+        function validateLegal() {
+            if (tosCheckbox.checked && firmaInput.value.trim().length > 2) {
+                submitBtn.classList.remove('opacity-50', 'cursor-not-allowed'); 
+                submitBtn.disabled = false;
+            } else {
+                submitBtn.classList.add('opacity-50', 'cursor-not-allowed'); 
+                submitBtn.disabled = true;
+            }
+        }
+        tosCheckbox.addEventListener('change', validateLegal);
+        firmaInput.addEventListener('input', validateLegal);
+
+        // ==========================================
+        // ENVÍO CON FORMINIT 
+        // ==========================================
+        const forminit = new Forminit();
+        const FORM_ID = "i4itqfm8r8f"; // Tu ID de Forminit
+
+        document.getElementById("contact-form").addEventListener("submit", async (e) => {
+            e.preventDefault(); 
+
+            if (!tosCheckbox.checked || firmaInput.value.trim().length < 3) {
+                alert(translations[currentLang]['onb-alert-terms']);
+                return;
+            }
+
+            const status = document.getElementById("form-status");
+            submitBtn.textContent = currentLang === 'es' ? "Procesando Arquitectura IA..." : "Processing AI Architecture...";
+            submitBtn.disabled = true;
+            submitBtn.classList.add("opacity-75");
+            status.classList.add("hidden");
+
+            const formData = new FormData(e.target);
+            
+            try {
+                // Envío asíncrono a Forminit
+                const { data, error } = await forminit.submit(FORM_ID, formData);
+
+                if (error) {
+                    throw new Error(error.message);
+                }
+
+                // Éxito: Limpiar caché local y mostrar mensaje final con el nuevo botón
+                localStorage.removeItem('qxao_onboarding_draft');
+                
+                document.getElementById('main-content').innerHTML = `
+                    <div class="text-center p-10 bg-white rounded-2xl shadow-sm border border-slate-200 mt-10">
+                        <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <svg class="w-10 h-10 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                        </div>
+                        <h2 data-i18n="onb-success-title" class="text-3xl font-bold font-montserrat text-[#690991] mb-4">${translations[currentLang]['onb-success-title']}</h2>
+                        <p data-i18n="onb-success-desc" class="text-slate-600 mb-8 max-w-md mx-auto">${translations[currentLang]['onb-success-desc']}</p>
+                        
+                        <!-- NUEVO BOTÓN DE INICIO -->
+                        <a href="https://qxao.dpdns.org" class="inline-flex items-center gap-2 px-8 py-3 bg-slate-100 text-slate-700 font-bold rounded-xl hover:bg-slate-200 hover:text-[#690991] transition-all border border-slate-200">
+                            <span data-i18n="onb-btn-home">${translations[currentLang]['onb-btn-home']}</span>
+                        </a>
+                    </div>
+                `;
+
+            } catch (err) {
+                // Manejo de Errores (Ej. Archivos muy pesados)
+                status.textContent = "Error: " + err.message + (currentLang === 'es' ? ". Verifica el tamaño de los archivos (Máx 100MB)." : ". Check file size (Max 100MB).");
+                status.className = "text-center font-bold mt-6 text-red-700 bg-red-100 p-6 rounded-xl border border-red-300 shadow-sm block";
+                submitBtn.textContent = currentLang === 'es' ? "Firmar y Enviar Arquitectura" : "Sign & Submit Architecture";
+                submitBtn.disabled = false;
+                submitBtn.classList.remove("opacity-75");
+            }
+        });
+
+        // Inicialización al cargar la página
+        window.addEventListener('DOMContentLoaded', () => {
+            translatePage();
+            loadDraft();
+        });
+    </script>
+</body>
+</html>

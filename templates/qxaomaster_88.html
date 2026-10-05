@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="es" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal Staff - Qxao</title>
+
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 671.14 514.29'><path fill='%23690991' d='M517.17,230.82,620.56,94.91a5.48,5.48,0,0,0-4.37-8.8H536.61a5.47,5.47,0,0,0-4.4,2.21l-59.66,80.2a5.48,5.48,0,0,1-8.84-.05s-26.53-35.94-49.29-67.71c-6.48-9.05-16.38-12-27.42-13.47-21.43-2.86-53.74,1.27-53.86,1.28-193.59,24.5-296.23,135.12-317,158a5.49,5.49,0,0,0,.49,7.83c128.48,111.9,275.62,131.39,345.21,134.45,0,0,33.44.47,39.19-5.87.49-.54,1-1.06,1.43-1.64,6.59-8.79,58.92-79.17,58.92-79.17a5.48,5.48,0,0,1,8.86.08l60.27,84.29A5.48,5.48,0,0,0,535,388.8h76.61a10,10,0,0,0,8-16.07L517.16,237.45A5.49,5.49,0,0,1,517.17,230.82ZM351.73,322.93a5.35,5.35,0,0,1-6.22,1.72l0,0a84.63,84.63,0,0,1-29.27-19.37,89.65,89.65,0,0,1-19.38-30.12A102.31,102.31,0,0,1,289.88,237q0-21.06,6.94-38.33a90.09,90.09,0,0,1,19.38-29.9,84.05,84.05,0,0,1,25.07-17.57c1-.46,2.09-.93,3.16-1.35s2.06-.8,3.11-1.17a5.51,5.51,0,0,1,6.24,1.87l61.67,82.23a5.49,5.49,0,0,1,0,6.62Z'/></svg>">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Open+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: { extend: { colors: { primary: '#690991', darkBg: '#0f172a', darkCard: '#1e293b' } } }
+        }
+    </script>
+    
+    <style>
+        body { font-family: 'Open Sans', system-ui, sans-serif; }
+        h1, h2, h3 { font-family: 'Montserrat', sans-serif; }
+
+        @keyframes mover-patron { 0% { background-position: 0 0; } 100% { background-position: -420px -300px; } }
+        .bg-grid-light {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='84' height='60' viewBox='0 -30.22 42.44 30.22'%3E%3Cpath fill='%23dc2626' fill-opacity='0.025' d='M18.33-5.39c1.6-0.64,2.98-1.55,4.16-2.72c1.18-1.17,2.1-2.53,2.76-4.09c0.66-1.56,0.99-3.26,0.99-5.12c0-1.85-0.33-3.56-0.99-5.12c-0.66-1.56-1.58-2.92-2.76-4.09c-1.18-1.17-2.57-2.08-4.16-2.72c-1.6-0.64-3.33-0.97-5.21-0.97c-1.88,0-3.61,0.32-5.21,0.97c-1.6,0.65-2.98,1.55-4.16,2.72-1.18,1.17-2.1,2.54-2.76,4.09C0.33-20.88,0-19.17,0-17.32c0,1.85,0.33,3.56,0.99,5.12c0.66,1.56,1.58,2.92,2.76,4.09s2.57,2.08,4.16,2.72c1.6,0.65,3.33,0.97,5.21,0.97C14.99-4.42,16.73-4.74,18.33-5.39z M8.22-6.05C6.71-6.67,5.4-7.53,4.27-8.64s-1.99-2.4-2.61-3.88c-0.62-1.47-0.93-3.08-0.93-4.81s0.31-3.33,0.93-4.81C2.28-23.6,3.15-24.89,4.27-26c1.12-1.11,2.44-1.97,3.95-2.59c1.51-0.62,3.14-0.93,4.9-0.93c1.75,0,3.39,0.31,4.9,0.93c1.51,0.62,2.83,1.49,3.95,2.59c1.12,1.11,1.99,2.4,2.61,3.87c0.62,1.47,0.93,3.08,0.93,4.81s-0.31,3.33-0.93,4.81c-0.62,1.48-1.49,2.77-2.61,3.88s-2.44,1.97-3.95,2.59c-1.51,0.62-3.14,0.93-4.9,0.93C11.37-5.12,9.73-5.43,8.22-6.05z M27.33-2.78l-0.51-0.51c-1.44,1.73-3.2,2.59-5.3,2.59c-0.76,0-1.53-0.15-2.32-0.46c-0.79-0.3-1.6-0.77-2.41-1.39c-0.81-0.62-1.64-1.38-2.46-2.28l-0.95,0.18c0.78,0.8,1.52,1.5,2.21,2.08c0.69,0.59,1.38,1.07,2.05,1.44c0.67,0.38,1.32,0.66,1.95,0.84C20.22-0.09,20.87,0,21.52,0C23.89,0,25.82-0.93,27.33-2.78z M27.2-2.63l7.24-9.35h-0.18l7.24,9.35h0.95l-7.82-9.98l-0.04,0.44l7.31-9.36h-0.88l-6.83,8.77h0.29l-6.83-8.77h-0.91l7.23,9.21L34-12.57l-7.71,9.94H27.2z'/%3E%3C/svg%3E");
+            background-size: 84px 60px;
+            animation: mover-patron 100s linear infinite;
+        }
+
+        .dark .bg-grid-light {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='84' height='60' viewBox='0 -30.22 42.44 30.22'%3E%3Cpath fill='%23ffffff' fill-opacity='0.015' d='M18.33-5.39c1.6-0.64,2.98-1.55,4.16-2.72c1.18-1.17,2.1-2.53,2.76-4.09c0.66-1.56,0.99-3.26,0.99-5.12c0-1.85-0.33-3.56-0.99-5.12c-0.66-1.56-1.58-2.92-2.76-4.09c-1.18-1.17-2.57-2.08-4.16-2.72c-1.6-0.64-3.33-0.97-5.21-0.97c-1.88,0-3.61,0.32-5.21,0.97c-1.6,0.65-2.98,1.55-4.16,2.72-1.18,1.17-2.1,2.54-2.76,4.09C0.33-20.88,0-19.17,0-17.32c0,1.85,0.33,3.56,0.99,5.12c0.66,1.56,1.58,2.92,2.76,4.09s2.57,2.08,4.16,2.72c1.6,0.65,3.33,0.97,5.21,0.97C14.99-4.42,16.73-4.74,18.33-5.39z M8.22-6.05C6.71-6.67,5.4-7.53,4.27-8.64s-1.99-2.4-2.61-3.88c-0.62-1.47-0.93-3.08-0.93-4.81s0.31-3.33,0.93-4.81C2.28-23.6,3.15-24.89,4.27-26c1.12-1.11,2.44-1.97,3.95-2.59c1.51-0.62,3.14-0.93,4.9-0.93c1.75,0,3.39,0.31,4.9,0.93c1.51,0.62,2.83,1.49,3.95,2.59c1.12,1.11,1.99,2.4,2.61,3.87c0.62,1.47,0.93,3.08,0.93,4.81s-0.31,3.33-0.93,4.81c-0.62,1.48-1.49,2.77-2.61,3.88s-2.44,1.97-3.95,2.59c-1.51,0.62-3.14,0.93-4.9,0.93C11.37-5.12,9.73-5.43,8.22-6.05z M27.33-2.78l-0.51-0.51c-1.44,1.73-3.2,2.59-5.3,2.59c-0.76,0-1.53-0.15-2.32-0.46c-0.79-0.3-1.6-0.77-2.41-1.39c-0.81-0.62-1.64-1.38-2.46-2.28l-0.95,0.18c0.78,0.8,1.52,1.5,2.21,2.08c0.69,0.59,1.38,1.07,2.05,1.44c0.67,0.38,1.32,0.66,1.95,0.84C20.22-0.09,20.87,0,21.52,0C23.89,0,25.82-0.93,27.33-2.78z M27.2-2.63l7.24-9.35h-0.18l7.24,9.35h0.95l-7.82-9.98l-0.04,0.44l7.31-9.36h-0.88l-6.83,8.77h0.29l-6.83-8.77h-0.91l7.23,9.21L34-12.57l-7.71,9.94H27.2z'/%3E%3C/svg%3E");
+        }
+
+        .glow-card { position: relative; overflow: hidden; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+        .glow-card::before {
+            content: ''; position: absolute; top: var(--mouse-y, 50%); left: var(--mouse-x, 50%);
+            transform: translate(-50%, -50%); width: 400px; height: 400px;
+            background: radial-gradient(circle, rgba(220, 38, 38, 0.1) 0%, transparent 60%); 
+            opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 0;
+        }
+        .dark .glow-card::before { background: radial-gradient(circle, rgba(220, 38, 38, 0.15) 0%, transparent 60%); }
+        .glow-card:hover::before { opacity: 1; }
+        .glow-card > * { position: relative; z-index: 1; }
+
+        @keyframes zoomInUp {
+            0% { opacity: 0; transform: translateY(40px) scale(0.95); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .animate-zoom-in { animation: zoomInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        
+        .floating-box { animation: floatCard 6s ease-in-out infinite; }
+        @keyframes floatCard {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-4px); } 
+        }
+
+        .premium-glow-box { position: relative; overflow: hidden; border-radius: 36px; padding: 2.5px; box-shadow: 0 15px 50px rgba(0, 0, 0, 0.2); }
+        .dark .premium-glow-box { box-shadow: 0 15px 50px rgba(0, 0, 0, 0.6); }
+        .premium-glow-box::after { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: repeating-conic-gradient(from 0deg, #690991 0%, #dc2626 5%, transparent 5%, transparent 40%, #690991 50%); animation: spin-border 6s linear infinite; z-index: 0; }
+        @keyframes spin-border { 100% { transform: rotate(360deg); } }
+        .premium-inner-card { position: relative; z-index: 10; border-radius: 34px; width: 100%; height: 100%; }
+    </style>
+</head>
+<body class="bg-gray-50 dark:bg-darkBg text-gray-800 dark:text-gray-100 min-h-screen flex flex-col justify-between p-6 bg-grid-light transition-colors">
+
+    <header class="w-full max-w-md mx-auto flex justify-end items-center gap-4 py-2">
+        <button id="lang-toggle" class="text-xs font-bold text-gray-500 dark:text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors px-2.5 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-darkCard shadow-sm">
+            ES <span class="opacity-40">|</span> EN
+        </button>
+        <button id="theme-toggle" class="text-gray-500 dark:text-gray-400 hover:text-red-500 dark:hover:text-red-400 focus:outline-none transition-colors p-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-darkCard shadow-sm">
+            <svg id="theme-toggle-dark-icon" class="hidden w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
+            <svg id="theme-toggle-light-icon" class="hidden w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"></path></svg>
+        </button>
+    </header>
+
+    <main class="flex-1 flex items-center justify-center my-auto">
+        <div class="floating-box w-full max-w-md animate-zoom-in">
+            <div class="premium-glow-box">
+                <div class="premium-inner-card glow-card bg-white dark:bg-darkCard p-10 flex flex-col justify-center">
+                    
+                    <div class="text-center mb-10">
+                        <div class="flex justify-center mb-4">
+                            <div class="w-16 h-16 bg-gray-900 rounded-2xl flex items-center justify-center shadow-[0_0_20px_rgba(0,0,0,0.4)] border border-red-500/30">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 671.14 514.29" class="w-10 h-10 fill-current text-white">
+                                    <path d="M517.17,230.82,620.56,94.91a5.48,5.48,0,0,0-4.37-8.8H536.61a5.47,5.47,0,0,0-4.4,2.21l-59.66,80.2a5.48,5.48,0,0,1-8.84-.05s-26.53-35.94-49.29-67.71c-6.48-9.05-16.38-12-27.42-13.47-21.43-2.86-53.74,1.27-53.86,1.28-193.59,24.5-296.23,135.12-317,158a5.49,5.49,0,0,0,.49,7.83c128.48,111.9,275.62,131.39,345.21,134.45,0,0,33.44.47,39.19-5.87.49-.54,1-1.06,1.43-1.64,6.59-8.79,58.92-79.17,58.92-79.17a5.48,5.48,0,0,1,8.86.08l60.27,84.29A5.48,5.48,0,0,0,535,388.8h76.61a10,10,0,0,0,8-16.07L517.16,237.45A5.49,5.49,0,0,1,517.17,230.82ZM351.73,322.93a5.35,5.35,0,0,1-6.22,1.72l0,0a84.63,84.63,0,0,1-29.27-19.37,89.65,89.65,0,0,1-19.38-30.12A102.31,102.31,0,0,1,289.88,237q0-21.06,6.94-38.33a90.09,90.09,0,0,1,19.38-29.9,84.05,84.05,0,0,1,25.07-17.57c1-.46,2.09-.93,3.16-1.35s2.06-.8,3.11-1.17a5.51,5.51,0,0,1,6.24,1.87l61.67,82.23a5.49,5.49,0,0,1,0,6.62Z"/>
+                                </svg>
+                            </div>
+                        </div>
+                        <h1 data-i18n="login-title" class="text-3xl font-bold text-gray-900 dark:text-white">Portal Staff</h1>
+                        <p data-i18n="login-subtitle" class="text-red-600 dark:text-red-400 mt-2 text-sm font-medium">Acceso restringido para el equipo Qxao</p>
+                    </div>
+
+                    <form id="login-form" class="space-y-6">
+                        <div>
+                            <label data-i18n="login-label-email" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Correo maestro</label>
+                            <input type="email" id="login-email" class="w-full px-5 py-4 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-2xl focus:outline-none focus:border-gray-900 dark:focus:border-white dark:text-white transition" placeholder="empleado@qxao.com" required>
+                        </div>
+                        <div>
+                            <label data-i18n="login-label-pass" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Llave de seguridad</label>
+                            <input type="password" id="login-password" class="w-full px-5 py-4 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-2xl focus:outline-none focus:border-gray-900 dark:focus:border-white dark:text-white transition" placeholder="••••••••" required>
+                        </div>
+
+                        <p id="error-message" class="hidden text-red-500 text-sm text-center font-bold"></p>
+
+                        <button type="submit" id="btn-submit" data-i18n="login-btn" class="w-full bg-gray-900 hover:bg-black dark:bg-white dark:hover:bg-gray-200 dark:text-black text-white py-4 rounded-2xl font-bold text-lg transition shadow-lg shadow-gray-900/30">
+                            Verificar Identidad
+                        </button>
+                    </form>
+
+                    <div class="mt-8 text-center relative z-20">
+                        <a href="index.html" data-i18n="login-back" class="text-sm text-gray-500 hover:text-gray-900 dark:hover:text-white transition font-medium">← Abandonar portal</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer></footer>
+
+    <script>
+        const translations = {
+            es: { "login-title": "Portal Staff", "login-subtitle": "Acceso restringido para el equipo Qxao", "login-label-email": "Correo corporativo", "login-label-pass": "Llave de seguridad", "login-btn": "Verificar Identidad", "login-back": "← Abandonar portal" },
+            en: { "login-title": "Staff Portal", "login-subtitle": "Restricted access for Qxao team", "login-label-email": "Corporate email", "login-label-pass": "Security key", "login-btn": "Verify Identity", "login-back": "← Leave portal" }
+        };
+
+        let currentLang = 'es';
+        const langToggleBtn = document.getElementById('lang-toggle');
+
+        function translatePage() {
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (translations[currentLang][key]) { el.textContent = translations[currentLang][key]; }
+            });
+        }
+
+        if (langToggleBtn) {
+            langToggleBtn.addEventListener('click', () => {
+                currentLang = currentLang === 'es' ? 'en' : 'es';
+                langToggleBtn.innerHTML = currentLang === 'es' ? 'ES <span class="opacity-40">|</span> EN' : '<span class="opacity-40">ES |</span> EN';
+                translatePage();
+            });
+        }
+
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
+        const themeToggleLightIcon = document.getElementById('theme-toggle-light-icon');
+
+        if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+            if(themeToggleLightIcon) themeToggleLightIcon.classList.remove('hidden');
+        } else {
+            document.documentElement.classList.remove('dark');
+            if(themeToggleDarkIcon) themeToggleDarkIcon.classList.remove('hidden');
+        }
+
+        if (themeToggleBtn) {
+            themeToggleBtn.addEventListener('click', function() {
+                if(themeToggleDarkIcon) themeToggleDarkIcon.classList.toggle('hidden');
+                if(themeToggleLightIcon) themeToggleLightIcon.classList.toggle('hidden');
+                if (document.documentElement.classList.contains('dark')) {
+                    document.documentElement.classList.remove('dark');
+                    localStorage.setItem('color-theme', 'light');
+                } else {
+                    document.documentElement.classList.add('dark');
+                    localStorage.setItem('color-theme', 'dark');
+                }
+            });
+        }
+
+        document.querySelectorAll('.glow-card').forEach(card => {
+            card.addEventListener('mousemove', e => {
+                const rect = card.getBoundingClientRect();
+                card.style.setProperty('--mouse-x', `${e.clientX - rect.left}px`);
+                card.style.setProperty('--mouse-y', `${e.clientY - rect.top}px`);
+            });
+        });
+
+        document.getElementById('login-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const errorMsg = document.getElementById('error-message');
+            const btn = document.getElementById('btn-submit');
+            errorMsg.classList.add('hidden');
+            btn.textContent = currentLang === 'es' ? "Validando bóveda..." : "Validating vault...";
+            btn.disabled = true;
+
+            try {
+                const response = await fetch('/api/auth/staff-login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        email: document.getElementById('login-email').value, 
+                        password: document.getElementById('login-password').value 
+                    }),
+                    credentials: 'include' // ENVÍA/RECIBE LA COOKIE QXAO_STAFF_TOKEN
+                });
+
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    localStorage.setItem('admin_name', data.user_name);
+                    localStorage.setItem('user_role', data.rol); 
+                    
+                    btn.textContent = currentLang === 'es' ? "¡Acceso Concedido!" : "Access Granted!";
+                    btn.classList.replace('bg-gray-900', 'bg-green-600');
+                    btn.classList.replace('dark:bg-white', 'dark:bg-green-500');
+                    
+                    setTimeout(() => {
+                        if (data.rol === 'master' || data.rol === 'ventas') {
+                            window.location.href = "admin.html"; 
+                        } else if (data.rol === 'prensa') {
+                            window.location.href = "redactar.html"; 
+                        }
+                    }, 600);
+                } else {
+                    errorMsg.textContent = data.detail || (currentLang === 'es' ? "Violación de seguridad detectada." : "Security violation detected.");
+                    errorMsg.classList.remove('hidden');
+                    btn.textContent = translations[currentLang]["login-btn"];
+                    btn.disabled = false;
+                }
+            } catch (error) {
+                errorMsg.textContent = currentLang === 'es' ? "Servidor inaccesible." : "Server unreachable.";
+                errorMsg.classList.remove('hidden');
+                btn.textContent = translations[currentLang]["login-btn"];
+                btn.disabled = false;
+            }
+        });            
+    </script>
+</body>
+</html>

@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="es" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Qxao - Panel de Operaciones">
+    <title>Qxao | Panel de Operaciones</title>
+
+    <script>
+        // BARRERA DE SEGURIDAD AISLADA
+        const role = localStorage.getItem('user_role');
+        if (role !== 'master' && role !== 'ventas') {
+            window.location.href = "qxaomaster_88.html";
+        }
+    </script>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Open+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = { darkMode: 'class', theme: { extend: { colors: { primary: '#690991', darkBg: '#0f172a', darkCard: '#1e293b' } } } }
+    </script>
+    
+    <style>
+        body { font-family: 'Open Sans', system-ui, sans-serif; }
+        h1, h2, h3, h4 { font-family: 'Montserrat', sans-serif; }
+        @keyframes mover-patron { 0% { background-position: 0 0; } 100% { background-position: -420px -300px; } }
+        .bg-grid-light {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='84' height='60' viewBox='0 -30.22 42.44 30.22'%3E%3Cpath fill='%23690991' fill-opacity='0.025' d='M18.33-5.39c1.6-0.64,2.98-1.55,4.16-2.72c1.18-1.17,2.1-2.53,2.76-4.09c0.66-1.56,0.99-3.26,0.99-5.12c0-1.85-0.33-3.56-0.99-5.12c-0.66-1.56-1.58-2.92-2.76-4.09c-1.18-1.17-2.57-2.08-4.16-2.72c-1.6-0.64-3.33-0.97-5.21-0.97c-1.88,0-3.61,0.32-5.21,0.97c-1.6,0.65-2.98,1.55-4.16,2.72-1.18,1.17-2.1,2.54-2.76,4.09C0.33-20.88,0-19.17,0-17.32c0,1.85,0.33,3.56,0.99,5.12c0.66,1.56,1.58,2.92,2.76,4.09s2.57,2.08,4.16,2.72c1.6,0.65,3.33,0.97,5.21,0.97C14.99-4.42,16.73-4.74,18.33-5.39z M8.22-6.05C6.71-6.67,5.4-7.53,4.27-8.64s-1.99-2.4-2.61-3.88c-0.62-1.47-0.93-3.08-0.93-4.81s0.31-3.33,0.93-4.81C2.28-23.6,3.15-24.89,4.27-26c1.12-1.11,2.44-1.97,3.95-2.59c1.51-0.62,3.14-0.93,4.9-0.93c1.75,0,3.39,0.31,4.9,0.93c1.51,0.62,2.83,1.49,3.95,2.59c1.12,1.11,1.99,2.4,2.61,3.87c0.62,1.47,0.93,3.08,0.93,4.81s-0.31,3.33-0.93,4.81c-0.62,1.48-1.49,2.77-2.61,3.88s-2.44,1.97-3.95,2.59c-1.51,0.62-3.14,0.93-4.9,0.93C11.37-5.12,9.73-5.43,8.22-6.05z M27.33-2.78l-0.51-0.51c-1.44,1.73-3.2,2.59-5.3,2.59c-0.76,0-1.53-0.15-2.32-0.46c-0.79-0.3-1.6-0.77-2.41-1.39c-0.81-0.62-1.64-1.38-2.46-2.28l-0.95,0.18c0.78,0.8,1.52,1.5,2.21,2.08c0.69,0.59,1.38,1.07,2.05,1.44c0.67,0.38,1.32,0.66,1.95,0.84C20.22-0.09,20.87,0,21.52,0C23.89,0,25.82-0.93,27.33-2.78z M27.2-2.63l7.24-9.35h-0.18l7.24,9.35h0.95l-7.82-9.98l-0.04,0.44l7.31-9.36h-0.88l-6.83,8.77h0.29l-6.83-8.77h-0.91l7.23,9.21L34-12.57l-7.71,9.94H27.2z'/%3E%3C/svg%3E");
+            background-size: 84px 60px;
+            animation: mover-patron 100s linear infinite;
+        }
+        .dark .bg-grid-light {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='84' height='60' viewBox='0 -30.22 42.44 30.22'%3E%3Cpath fill='%23ffffff' fill-opacity='0.015' d='M18.33-5.39c1.6-0.64,2.98-1.55,4.16-2.72c1.18-1.17,2.1-2.53,2.76-4.09c0.66-1.56,0.99-3.26,0.99-5.12c0-1.85-0.33-3.56-0.99-5.12c-0.66-1.56-1.58-2.92-2.76-4.09c-1.18-1.17-2.57-2.08-4.16-2.72c-1.6-0.64-3.33-0.97-5.21-0.97c-1.88,0-3.61,0.32-5.21,0.97c-1.6,0.65-2.98,1.55-4.16,2.72-1.18,1.17-2.1,2.54-2.76,4.09C0.33-20.88,0-19.17,0-17.32c0,1.85,0.33,3.56,0.99,5.12c0.66,1.56,1.58,2.92,2.76,4.09s2.57,2.08,4.16,2.72c1.6,0.65,3.33,0.97,5.21,0.97C14.99-4.42,16.73-4.74,18.33-5.39z M8.22-6.05C6.71-6.67,5.4-7.53,4.27-8.64s-1.99-2.4-2.61-3.88c-0.62-1.47-0.93-3.08-0.93-4.81s0.31-3.33,0.93-4.81C2.28-23.6,3.15-24.89,4.27-26c1.12-1.11,2.44-1.97,3.95-2.59c1.51-0.62,3.14-0.93,4.9-0.93c1.75,0,3.39,0.31,4.9,0.93c1.51,0.62,2.83,1.49,3.95,2.59c1.12,1.11,1.99,2.4,2.61,3.87c0.62,1.47,0.93,3.08,0.93,4.81s-0.31,3.33-0.93,4.81c-0.62,1.48-1.49,2.77-2.61,3.88s-2.44,1.97-3.95,2.59c-1.51,0.62-3.14,0.93-4.9,0.93C11.37-5.12,9.73-5.43,8.22-6.05z M27.33-2.78l-0.51-0.51c-1.44,1.73-3.2,2.59-5.3,2.59c-0.76,0-1.53-0.15-2.32-0.46c-0.79-0.3-1.6-0.77-2.41-1.39c-0.81-0.62-1.64-1.38-2.46-2.28l-0.95,0.18c0.78,0.8,1.52,1.5,2.21,2.08c0.69,0.59,1.38,1.07,2.05,1.44c0.67,0.38,1.32,0.66,1.95,0.84C20.22-0.09,20.87,0,21.52,0C23.89,0,25.82-0.93,27.33-2.78z M27.2-2.63l7.24-9.35h-0.18l7.24,9.35h0.95l-7.82-9.98l-0.04,0.44l7.31-9.36h-0.88l-6.83,8.77h0.29l-6.83-8.77h-0.91l7.23,9.21L34-12.57l-7.71,9.94H27.2z'/%3E%3C/svg%3E");
+        }
+    </style>
+</head>
+<body class="bg-gray-50 dark:bg-darkBg text-gray-800 dark:text-gray-100 min-h-screen flex flex-col bg-grid-light transition-colors">
+
+    <header class="w-full bg-white/90 dark:bg-darkCard/90 backdrop-blur-md border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50 px-6 py-4 flex justify-between items-center shadow-sm">
+        <div class="flex items-center gap-4">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-[#690991] to-[#c75ced] flex items-center justify-center shadow-lg shadow-[#690991]/30">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 671.14 514.29" class="w-6 h-6 fill-white">
+                    <path d="M517.17,230.82,620.56,94.91a5.48,5.48,0,0,0-4.37-8.8H536.61a5.47,5.47,0,0,0-4.4,2.21l-59.66,80.2a5.48,5.48,0,0,1-8.84-.05s-26.53-35.94-49.29-67.71c-6.48-9.05-16.38-12-27.42-13.47-21.43-2.86-53.74,1.27-53.86,1.28-193.59,24.5-296.23,135.12-317,158a5.49,5.49,0,0,0,.49,7.83c128.48,111.9,275.62,131.39,345.21,134.45,0,0,33.44.47,39.19-5.87.49-.54,1-1.06,1.43-1.64,6.59-8.79,58.92-79.17,58.92-79.17a5.48,5.48,0,0,1,8.86.08l60.27,84.29A5.48,5.48,0,0,0,535,388.8h76.61a10,10,0,0,0,8-16.07L517.16,237.45A5.49,5.49,0,0,1,517.17,230.82ZM351.73,322.93a5.35,5.35,0,0,1-6.22,1.72l0,0a84.63,84.63,0,0,1-29.27-19.37,89.65,89.65,0,0,1-19.38-30.12A102.31,102.31,0,0,1,289.88,237q0-21.06,6.94-38.33a90.09,90.09,0,0,1,19.38-29.9,84.05,84.05,0,0,1,25.07-17.57c1-.46,2.09-.93,3.16-1.35s2.06-.8,3.11-1.17a5.51,5.51,0,0,1,6.24,1.87l61.67,82.23a5.49,5.49,0,0,1,0,6.62Z"/>
+                </svg>
+            </div>
+            <div class="border-l-2 border-gray-300 dark:border-gray-600 pl-3 flex flex-col justify-center">
+                <span class="block text-[10px] text-[#690991] dark:text-[#c75ced] font-bold tracking-widest uppercase">Qxao CRM</span>
+                <span id="top-admin-name" class="block text-sm font-bold text-gray-800 dark:text-gray-200">Personal Autorizado</span>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-3 md:gap-4">
+            <button id="theme-toggle" class="p-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:text-[#690991] transition shadow-sm">
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
+            </button>
+            <button onclick="openModal('create')" class="bg-[#690991] hover:bg-[#4a0066] text-white px-4 md:px-6 py-2 md:py-3 rounded-xl text-sm font-bold shadow-lg shadow-[#690991]/30 transition flex items-center gap-2">
+                <span>+</span> <span class="hidden md:inline">Crear Cliente</span>
+            </button>
+
+            <button onclick="cambiarMiPassword()" class="text-xs font-bold px-3 py-1.5 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-300 dark:hover:bg-gray-600 transition">
+    Cambiar mi Contraseña
+</button>
+
+            <a href="#" onclick="logout()" class="bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/40 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800 px-3 md:px-4 py-2 md:py-3 rounded-xl text-sm font-semibold transition">Salir</a>
+        </div>
+    </header>
+
+    <main class="flex-1 max-w-7xl w-full mx-auto p-6 space-y-6">
+        
+        <div class="flex flex-col sm:flex-row justify-between items-center bg-white dark:bg-darkCard p-6 rounded-3xl border border-gray-200 dark:border-gray-700 shadow-sm gap-4">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Centro de Operaciones — Departamento de Ventas</h1>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Gestión de cuentas de clientes, planes y consumo de IA.</p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="bg-white dark:bg-darkCard p-6 rounded-3xl border border-gray-200 dark:border-gray-700 shadow-sm flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Clientes Activos</p>
+                    <h3 id="stat-active-clients" class="text-3xl font-bold text-gray-900 dark:text-white mt-1">...</h3>
+                </div>
+                <div class="p-4 bg-purple-100 dark:bg-purple-900/20 text-[#690991] dark:text-[#c75ced] rounded-2xl">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                </div>
+            </div>
+            
+            <div class="bg-white dark:bg-darkCard p-6 rounded-3xl border border-gray-200 dark:border-gray-700 shadow-sm flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Interacciones IA Hoy</p>
+                    <h3 id="stat-conversations" class="text-3xl font-bold text-gray-900 dark:text-white mt-1">...</h3>
+                </div>
+                <div class="p-4 bg-blue-100 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-2xl">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+                </div>
+            </div>
+
+            <div class="bg-white dark:bg-darkCard p-6 rounded-3xl border border-gray-200 dark:border-gray-700 shadow-sm flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Tasa de Resolución Autónoma</p>
+                    <h3 id="stat-success-rate" class="text-3xl font-bold text-gray-900 dark:text-white mt-1">...</h3>
+                </div>
+                <div class="p-4 bg-green-100 dark:bg-green-900/20 text-green-600 dark:text-green-400 rounded-2xl">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white dark:bg-darkCard rounded-3xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700 text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                            <th class="p-4 font-semibold">ID</th>
+                            <th class="p-4 font-semibold">Cliente</th>
+                            <th class="p-4 font-semibold">Empresa</th>
+                            <th class="p-4 font-semibold">Estado</th>
+                            <th class="p-4 font-semibold">Plan</th>
+                            <th class="p-4 font-semibold">Consumo IA</th>
+                            <th class="p-4 font-semibold">Sistemas</th>
+                            <th class="p-4 font-semibold text-right">Acciones de Soporte</th>
+                        </tr>
+                    </thead>
+                    <tbody id="users-table-body" class="divide-y divide-gray-200 dark:divide-gray-700 text-sm">
+                        <tr><td colspan="8" class="p-8 text-center text-gray-500">Cargando base de datos de clientes...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="user-modal" class="hidden fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 opacity-0 transition-opacity duration-300 overflow-y-auto">
+            <div class="bg-white dark:bg-darkCard w-full max-w-md p-8 rounded-3xl shadow-2xl border border-gray-200 dark:border-gray-700 transform scale-95 transition-transform duration-300 relative my-8" id="modal-content">
+                <button type="button" onclick="closeModal()" class="absolute top-4 right-4 text-gray-400 hover:text-red-500 transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+                
+                <h2 id="modal-title" class="text-xl font-bold text-[#690991] dark:text-[#c75ced] mb-6">Nuevo Cliente</h2>
+                
+                <form id="user-form" class="space-y-4">
+                    <input type="hidden" id="edit-user-id">
+
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Nombre</label>
+                        <input type="text" id="m-name" required class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:border-[#690991] dark:text-white transition">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Empresa</label>
+                        <input type="text" id="m-company" required class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:border-[#690991] dark:text-white transition">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Correo Electrónico</label>
+                        <input type="email" id="m-email" required class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:border-[#690991] dark:text-white transition">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Plan Asignado</label>
+                        <select id="m-plan" class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:border-[#690991] dark:text-white transition">
+                            <option value="Básico">Básico (1,000 msjs)</option>
+                            <option value="Medio">Medio (2,000 msjs)</option>
+                            <option value="Pro">Pro (5,000 msjs)</option>
+                            <option value="Enterprise">Enterprise (10,000 msjs)</option>
+                        </select>
+                    </div>
+
+                    <div id="password-container">
+                        <label id="m-password-label" class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Contraseña</label>
+                        <input type="password" id="m-password" class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:border-[#690991] dark:text-white transition">
+                    </div>
+                    
+                    <p id="modal-error" class="hidden text-red-500 text-sm font-medium text-center"></p>
+                    
+                    <button type="submit" id="btn-save" class="w-full bg-[#690991] hover:bg-[#4a0066] text-white py-3 rounded-xl font-bold transition shadow-lg shadow-[#690991]/30 mt-4">
+                        Guardar Cliente
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <div id="logs-modal" class="hidden fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
+            <div class="bg-white dark:bg-darkCard w-full max-w-lg p-8 rounded-3xl shadow-2xl border border-gray-200 dark:border-gray-700 transform scale-95 transition-transform duration-300 relative">
+                <button type="button" onclick="closeLogsModal()" class="absolute top-4 right-4 text-gray-400 hover:text-red-500 transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+                
+                <h2 class="text-xl font-bold text-[#690991] dark:text-[#c75ced] mb-2">Visor de Errores y Auditoría</h2>
+                <p id="logs-subtitle" class="text-xs text-gray-500 dark:text-gray-400 mb-6">Últimos eventos técnicos registrados para la cuenta.</p>
+                
+                <div id="logs-container" class="space-y-3 max-h-64 overflow-y-auto pr-2">
+                    <p class="text-sm text-gray-400 text-center py-4">Cargando registros...</p>
+                </div>
+
+                <button onclick="closeLogsModal()" class="w-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-white py-3 rounded-xl font-bold transition mt-6">
+                    Cerrar Visor
+                </button>
+            </div>
+        </div>
+
+    </main>
+
+<script>
+        let globalUsersList = []; 
+
+        // 1. FILTRO ANTI-XSS
+        function escapeHTML(value) {
+            return String(value ?? '').replace(/[&<>"']/g, character => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'
+            })[character]);
+        }
+        
+        let currentModalMode = 'create'; 
+
+        // 2. INTERCEPTOR GLOBAL DE SESIÓN
+        function handleUnauthorized(response) {
+            if (response.status === 401) {
+                alert("Tu sesión ha caducado por seguridad. Vuelve a iniciar sesión.");
+                logout();
+                return true;
+            }
+            return false;
+        }
+
+        // 3. UTILIDAD ANTI-CSRF
+        function getAuthHeaders() {
+            // Busca la cookie 'qxao_csrf' inyectada por FastAPI
+            const csrfMatch = document.cookie.match(/(?:^|; )qxao_csrf=([^;]*)/);
+            const csrfToken = csrfMatch ? decodeURIComponent(csrfMatch[1]) : '';
+            
+            return { 
+                'Content-Type': 'application/json',
+                'X-CSRF-Token': csrfToken // El escudo Anti-CSRF
+            };
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const userName = localStorage.getItem('admin_name');
+            const userRole = localStorage.getItem('user_role');
+            if (userName) document.getElementById('top-admin-name').textContent = userName + ` (${userRole.toUpperCase()})`;
+
+            fetchUsers();
+            fetchStats();
+        });
+
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        }
+        themeToggleBtn.addEventListener('click', () => {
+            document.documentElement.classList.toggle('dark');
+            localStorage.setItem('color-theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+        });
+
+        async function logout() {
+            try { 
+                await fetch('/api/logout/staff', { 
+                    method: 'POST', 
+                    headers: getAuthHeaders(), // CORRECCIÓN: Inyección del header CSRF en el logout
+                    credentials: 'include' 
+                }); 
+            } catch(e) {}
+            localStorage.removeItem('user_role');
+            localStorage.removeItem('admin_name');
+            window.location.href = "qxaomaster_88.html";
+        }
+
+        async function fetchStats() {
+            try {
+                const response = await fetch('/api/admin/stats', { headers: getAuthHeaders(), credentials: 'include' });
+                if (handleUnauthorized(response)) return;
+                
+                const stats = await response.json();
+                document.getElementById('stat-active-clients').textContent = stats.total_active_clients;
+                document.getElementById('stat-conversations').textContent = stats.conversations_today.toLocaleString();
+                document.getElementById('stat-success-rate').textContent = stats.success_rate + '%';
+            } catch (error) {
+                console.error("Error cargando estadísticas");
+            }
+        }
+
+        async function fetchUsers() {
+            const tableBody = document.getElementById('users-table-body');
+            try {
+                const response = await fetch('/api/admin/users', { headers: getAuthHeaders(), credentials: 'include' });
+                if (handleUnauthorized(response)) return;
+
+                const users = await response.json();
+                
+                tableBody.innerHTML = ''; 
+                if (users.length === 0) return tableBody.innerHTML = `<tr><td colspan="8" class="p-8 text-center text-gray-500">Vacío</td></tr>`;
+                
+                globalUsersList = users;
+                let clientesMostrados = 0;
+
+                users.forEach(user => {
+                    clientesMostrados++;
+
+                    const statusClass = user.is_active 
+                        ? 'bg-green-100 text-green-700 dark:bg-green-500/10 dark:text-green-400 border-green-200 dark:border-green-500/20' 
+                        : 'bg-red-100 text-red-700 dark:bg-red-500/10 dark:text-red-400 border-red-200 dark:border-red-500/20';
+                    
+                    const blockBtnText = user.is_active ? 'Bloquear' : 'Desbloquear';
+                    const blockBtnColor = user.is_active ? 'text-red-500 bg-red-50 dark:bg-red-900/20 hover:text-red-700' : 'text-orange-500 bg-orange-50 dark:bg-orange-900/20 hover:text-orange-700';
+
+                    const limite = user.limite_mensajes || 1000;
+                    const consumidos = user.mensajes_consumidos || 0;
+                    const porcentajeUso = Math.min((consumidos / limite) * 100, 100).toFixed(0);
+                    const colorBarra = porcentajeUso > 90 ? 'bg-red-500' : 'bg-blue-500';
+                    
+                    let planLabel = user.plan || "Básico";
+                    let planColor = planLabel === 'Pro' ? 'bg-blue-900/50 text-blue-300 border-blue-700' : 
+                                    planLabel === 'Enterprise' ? 'bg-yellow-900/50 text-yellow-300 border-yellow-700' : 
+                                    planLabel === 'Medio' ? 'bg-green-900/50 text-green-300 border-green-700' : 
+                                    'bg-purple-900/50 text-purple-300 border-purple-700';
+
+                    const agentePausado = user.estado_agente === 'Pausado';
+                    const agentBtnText = agentePausado ? 'Reanudar' : 'Pausar';
+                    const agentBtnColor = agentePausado ? 'text-green-500 bg-green-50 dark:bg-green-900/20' : 'text-yellow-500 bg-yellow-50 dark:bg-yellow-900/20';
+                    
+                    const webhookDot = user.webhook_activo ? 'bg-green-500' : 'bg-red-500 animate-pulse';
+                    const inventarioDot = user.inventario_activo ? 'bg-green-500' : 'bg-red-500 animate-pulse';
+                    const agenteBadge = agentePausado ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' : 'bg-green-500/20 text-green-400 border-green-500/30';
+
+                    // Variables escapadas para evitar XSS
+                    const safeName = escapeHTML(user.full_name);
+                    const safeCompany = escapeHTML(user.company_name);
+                    const safeStatus = escapeHTML(user.status);
+                    const safePlan = escapeHTML(planLabel);
+                    const safeAgentStatus = escapeHTML(user.estado_agente);
+
+                    const row = document.createElement('tr');
+                    row.className = 'hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors group';
+                    row.innerHTML = `
+                        <td class="p-4 text-gray-500 dark:text-gray-400 font-medium">#${user.id}</td>
+                        <td class="p-4">
+                            <div class="font-semibold text-gray-900 dark:text-white">${safeName}</div>
+                            <div class="mt-1"><span class="text-[9px] uppercase tracking-widest font-bold px-2 py-0.5 rounded-md bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300">CLIENTE</span></div>
+                        </td>
+                        <td class="p-4 text-gray-600 dark:text-gray-300">${safeCompany}</td>
+                        <td class="p-4">
+                            <span class="px-3 py-1 rounded-full text-xs font-bold border ${statusClass}">
+                                ${safeStatus}
+                            </span>
+                        </td>
+                        
+                        <td class="p-4">
+                            <span class="px-3 py-1 inline-flex text-xs leading-5 font-bold rounded-full border ${planColor}">
+                                ${safePlan}
+                            </span>
+                        </td>
+                        
+                        <td class="p-4">
+                            <div class="flex flex-col w-full max-w-[120px]">
+                                <div class="flex justify-between text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">
+                                    <span>${consumidos} / ${limite}</span>
+                                    <span class="${porcentajeUso > 90 ? 'text-red-500' : ''}">${porcentajeUso}%</span>
+                                </div>
+                                <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                                    <div class="${colorBarra} h-2 rounded-full" style="width: ${porcentajeUso}%"></div>
+                                </div>
+                            </div>
+                        </td>
+
+                        <td class="p-4">
+                            <div class="flex flex-col gap-1 text-xs">
+                                <span class="px-2 py-0.5 rounded-md font-bold w-fit border ${agenteBadge}">${safeAgentStatus}</span>
+                                <div class="flex items-center gap-3 mt-1 text-gray-400 text-[11px]">
+                                    <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full ${webhookDot}"></span> Webhook</span>
+                                    <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full ${inventarioDot}"></span> Stock</span>
+                                </div>
+                            </div>
+                        </td>
+
+                        <td class="p-4 text-right space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button onclick="verLogs(${user.id}, decodeURIComponent('${encodeURIComponent(user.full_name || '')}'))" class="text-purple-500 hover:text-purple-700 text-[11px] font-bold px-2 py-1 bg-purple-50 dark:bg-purple-900/20 rounded-md" title="Ver últimos 5 errores técnicos">Logs</button>
+                            <button onclick="impersonar(decodeURIComponent('${encodeURIComponent(user.email || '')}'), decodeURIComponent('${encodeURIComponent(user.full_name || '')}'))" class="text-indigo-500 hover:text-indigo-700 text-[11px] font-bold px-2 py-1 bg-indigo-50 dark:bg-indigo-900/20 rounded-md" title="Iniciar sesión como este cliente">Entrar como</button>
+                            <button onclick="toggleAgente(${user.id})" class="${agentBtnColor} text-[11px] font-bold px-2 py-1 rounded-md">${agentBtnText}</button>
+                            <button onclick="abrirEditar(${user.id})" class="text-blue-500 hover:text-blue-700 text-[11px] font-bold px-2 py-1 bg-blue-50 dark:bg-blue-900/20 rounded-md">Editar</button>
+                            <button onclick="toggleBloquear(${user.id})" class="${blockBtnColor} text-[11px] font-bold px-2 py-1 rounded-md">${blockBtnText}</button>
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+
+                if (clientesMostrados === 0) tableBody.innerHTML = `<tr><td colspan="8" class="p-8 text-center text-gray-500">Crea tu primer cliente en la base de datos.</td></tr>`;
+
+            } catch (error) {
+                tableBody.innerHTML = `<tr><td colspan="8" class="p-8 text-center text-red-500">Error al conectar con la base de datos segura.</td></tr>`;
+            }
+        }
+
+        async function verLogs(userId, userName) {
+            const modal = document.getElementById('logs-modal');
+            const container = document.getElementById('logs-container');
+            const subtitle = document.getElementById('logs-subtitle');
+            
+            subtitle.textContent = `Registros de auditoría para: ${escapeHTML(userName)} (ID #${userId})`;
+            container.innerHTML = `<p class="text-sm text-gray-400 text-center py-4">Buscando errores en la base de datos...</p>`;
+            
+            modal.classList.remove('hidden');
+            setTimeout(() => modal.classList.remove('opacity-0'), 10);
+
+            try {
+                const response = await fetch(`/api/admin/users/${userId}/errors`, { headers: getAuthHeaders(), credentials: 'include' });
+                if (handleUnauthorized(response)) return;
+                
+                const logs = await response.json();
+
+                container.innerHTML = '';
+                if (logs.length === 0) {
+                    container.innerHTML = `<p class="text-sm text-green-500 text-center py-4 font-medium">¡Sin errores reportados! Todo marcha al 100%.</p>`;
+                    return;
+                }
+
+                logs.forEach(log => {
+                    const item = document.createElement('div');
+                    item.className = 'p-3 bg-gray-50 dark:bg-gray-800/60 rounded-xl border border-gray-200 dark:border-gray-700 text-xs flex flex-col gap-1';
+                    item.innerHTML = `
+                        <div class="flex justify-between font-mono text-gray-400 text-[10px]">
+                            <span>LOG #${log.id}</span>
+                            <span>${escapeHTML(log.timestamp)}</span>
+                        </div>
+                        <p class="font-medium text-gray-800 dark:text-gray-200">${escapeHTML(log.mensaje)}</p>
+                    `;
+                    container.appendChild(item);
+                });
+            } catch (err) {
+                container.innerHTML = `<p class="text-sm text-red-500 text-center py-4">Error al obtener los logs del servidor.</p>`;
+            }
+        }
+
+        function closeLogsModal() {
+            const modal = document.getElementById('logs-modal');
+            modal.classList.add('opacity-0');
+            setTimeout(() => modal.classList.add('hidden'), 300);
+        }
+
+async function impersonar(email, name) {
+            if (confirm(`¿Estás seguro de iniciar sesión como "${name}" (${email})? Entrarás en su perspectiva de usuario real.`)) {
+                try {
+                    const response = await fetch('/api/admin/impersonate', {
+                        method: 'POST',
+                        headers: getAuthHeaders(), // Exigimos el CSRF Token
+                        body: JSON.stringify({ email: email }),
+                        credentials: 'include'
+                    });
+                    
+                    if (handleUnauthorized(response)) return;
+
+                    if (response.ok) {
+                        sessionStorage.setItem('is_impersonating', 'true');
+                        sessionStorage.setItem('impersonate_name', name);
+                        sessionStorage.setItem('impersonate_email', email);
+                        // Abrimos el dashboard real en otra pestaña
+                        window.open("dashboard.html", "_blank");
+                    } else {
+                        alert("Error al generar acceso al dashboard del cliente.");
+                    }
+                } catch(e) {
+                    alert("Error de conexión al servidor.");
+                }
+            }
+        }
+        
+        async function toggleAgente(id) {
+            try {
+                const response = await fetch(`/api/admin/users/${id}/toggle-agent`, { method: 'PUT', headers: getAuthHeaders(), credentials: 'include' });
+                if (handleUnauthorized(response)) return;
+                
+                fetchUsers();
+                fetchStats();
+            } catch (error) {
+                alert("Error al cambiar el estado del agente IA.");
+            }
+        }
+
+        function abrirEditar(id) {
+            const user = globalUsersList.find(u => u.id === id);
+            if (!user) return;
+
+            document.getElementById('edit-user-id').value = user.id;
+            document.getElementById('m-name').value = user.full_name;
+            document.getElementById('m-company').value = user.company_name;
+            document.getElementById('m-email').value = user.email;
+            document.getElementById('m-plan').value = user.plan || 'Básico';
+            
+            openModal('edit');
+        }
+
+        async function toggleBloquear(id) {
+            try {
+                const response = await fetch(`/api/admin/users/${id}/toggle-block`, { method: 'PUT', headers: getAuthHeaders(), credentials: 'include' });
+                if (handleUnauthorized(response)) return;
+                
+                fetchUsers(); 
+                fetchStats();
+            } catch (error) {
+                alert("Error al intentar cambiar el estado del cliente.");
+            }
+        }
+        
+        function openModal(mode) {
+            currentModalMode = mode;
+            const modal = document.getElementById('user-modal');
+            const content = document.getElementById('modal-content');
+            const passInput = document.getElementById('m-password');
+            const passLabel = document.getElementById('m-password-label');
+            const title = document.getElementById('modal-title');
+
+            passInput.value = ''; 
+
+            if (mode === 'create') {
+                document.getElementById('user-form').reset();
+                document.getElementById('m-plan').value = 'Básico';
+                title.textContent = "Nuevo Cliente";
+                passLabel.textContent = "Contraseña";
+                passInput.required = true;
+                passInput.placeholder = "••••••••";
+            } else {
+                title.textContent = "Editar Cliente";
+                passLabel.textContent = "Nueva Contraseña (Opcional)";
+                passInput.required = false;
+                passInput.placeholder = "Déjalo vacío para no cambiarla";
+            }
+
+            modal.classList.remove('hidden');
+            setTimeout(() => { modal.classList.remove('opacity-0'); content.classList.remove('scale-95'); }, 10);
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('user-modal');
+            const content = document.getElementById('modal-content');
+            modal.classList.add('opacity-0');
+            content.classList.add('scale-95');
+            setTimeout(() => { modal.classList.add('hidden'); }, 300);
+        }
+
+        document.getElementById('user-form').addEventListener('submit', async (e) => {
+            e.preventDefault(); 
+            const btn = document.getElementById('btn-save');
+            const errorMsg = document.getElementById('modal-error');
+            btn.textContent = 'Guardando...'; btn.disabled = true; errorMsg.classList.add('hidden');
+
+            try {
+                let url = '/api/admin/users';
+                let method = 'POST';
+                let payload = {
+                    full_name: document.getElementById('m-name').value,
+                    company_name: document.getElementById('m-company').value,
+                    email: document.getElementById('m-email').value,
+                    password: document.getElementById('m-password').value,
+                    plan: document.getElementById('m-plan').value
+                };
+
+                if (currentModalMode === 'edit') {
+                    const id = document.getElementById('edit-user-id').value;
+                    url = `${url}/${id}`;
+                    method = 'PUT';
+                }
+
+                const response = await fetch(url, {
+                    method: method,
+                    headers: getAuthHeaders(),
+                    body: JSON.stringify(payload),
+                    credentials: 'include'
+                });
+                
+                if (handleUnauthorized(response)) return;
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    closeModal();
+                    fetchUsers(); 
+                    fetchStats();
+                } else {
+                    errorMsg.textContent = data.detail || 'Error al guardar.';
+                    errorMsg.classList.remove('hidden');
+                }
+            } catch (error) {
+                errorMsg.textContent = 'Error conectando con el servidor.';
+                errorMsg.classList.remove('hidden');
+            } finally {
+                btn.textContent = 'Guardar Cliente'; btn.disabled = false;
+            }
+        });
+
+        async function cambiarMiPassword() {
+            const currentPass = prompt("Por seguridad, ingresa tu CONTRASEÑA ACTUAL:");
+            if (!currentPass) return;
+
+            const newPass = prompt("Ingresa tu NUEVA CONTRASEÑA (mínimo 8 caracteres):");
+            if (!newPass || newPass.length < 8) {
+                alert("La contraseña debe tener al menos 8 caracteres. Operación cancelada.");
+                return;
+            }
+
+            const confirmPass = prompt("Repite tu NUEVA CONTRASEÑA:");
+            if (newPass !== confirmPass) {
+                alert("Las contraseñas no coinciden. Operación cancelada.");
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/admin/change-password', {
+                    method: 'PUT',
+                    headers: getAuthHeaders(),
+                    body: JSON.stringify({ current_password: currentPass, new_password: newPass }),
+                    credentials: 'include'
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    alert("¡Contraseña actualizada con éxito! Por favor, inicia sesión nuevamente.");
+                    localStorage.removeItem('user_role');
+                    localStorage.removeItem('admin_name');
+                    window.location.href = "qxaomaster_88.html"; // Te expulsa para probar la nueva clave
+                } else {
+                    alert(data.detail || "Error al cambiar la contraseña.");
+                }
+            } catch (error) {
+                alert("Error de conexión con el servidor.");
+            }
+        }
+
+    </script>
+    </body>
+</html>
