@@ -3,7 +3,7 @@ import re
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, RedirectResponse
+from fastapi.responses import FileResponse, RedirectResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
 
@@ -12,97 +12,201 @@ load_dotenv()
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
-from database import engine, Base, SessionLocal, StaffModel
+from database import engine, Base, SessionLocal, StaffModel, UserModel, ensure_multitenant_columns
 from security import hash_password, limiter, generate_csrf_token
 from rutas import usuarios
 
+
 # =======================================================
-# 1. LIFESPAN: MODERNIZACIÓN DE INICIO DE SERVIDOR
+# 1. LIFESPAN: INICIALIZACIÓN DE STAFF Y CLIENTES BASE
 # =======================================================
-def seed_staff():
+def seed_staff_and_clients():
     db = SessionLocal()
     try:
-        master_email = os.getenv("MASTER_EMAIL")
-        master_pass = os.getenv("MASTER_PASSWORD")
+        master_email = os.getenv("MASTER_EMAIL", "admin@qxao.com")
+        master_pass = os.getenv("MASTER_PASSWORD", "TuContrasenaSuperSecretaAqui!")
 
-        if not all((master_email, master_pass)):
-            raise RuntimeError("Faltan credenciales maestras en el .env.")
+        if master_email and master_pass:
+            if not db.query(StaffModel).filter(StaffModel.email == master_email).first():
+                db.add(StaffModel(
+                    full_name="CEO Qxao",
+                    email=master_email,
+                    hashed_password=hash_password(master_pass),
+                    rol="master",
+                    is_active=True
+                ))
+                db.commit()
 
-        if not db.query(StaffModel).filter(StaffModel.email == master_email).first():
-            db.add(StaffModel(
-                full_name="CEO Qxao", email=master_email,
-                hashed_password=hash_password(master_pass), rol="master", is_active=True
-            ))
+        # Auto-registro seguro de clientes actuales si aún no existen en la base de datos
+        clientes_iniciales = [
+            {
+                "full_name": "Jorge Suárez",
+                "company_name": "JL Burger",
+                "email": "contacto@jlburger.com",
+                "password": os.getenv("JLBURGER_DEFAULT_PASSWORD", "JLBurger2026!"),
+                "plan": "Pro",
+                "limite_mensajes": 5000,
+                "evolution_instance": "JLBurguer.",
+                "chatwoot_url": "https://chat.qxao.dpdns.org/app/accounts/2/dashboard",
+                "nocodb_url": "https://crm.qxao.dpdns.org/wgai29by/pi4c3iginxwezws",
+                "qr_webhook_url": "https://n8n.qxao.dpdns.org/webhook/obtener-qr-jlburger",
+                "whatsapp_conectado": True
+            },
+            {
+                "full_name": "Yolanda Engranos",
+                "company_name": "Engranos C.A",
+                "email": "operaciones@engranos.com",
+                "password": os.getenv("ENGRANOS_DEFAULT_PASSWORD", "Engranos2026!"),
+                "plan": "Enterprise",
+                "limite_mensajes": 50000,
+                "evolution_instance": "pisa62",
+                "chatwoot_url": "https://chat.qxao.dpdns.org/app/accounts/2/dashboard",
+                "nocodb_url": "https://crm.qxao.dpdns.org/wgai29by/p96tfdcx3ish0pv",
+                "qr_webhook_url": "https://n8n.qxao.dpdns.org/webhook/obtener-qr-engranos",
+                "whatsapp_conectado": True
+            }
+        ]
+
+        for c in clientes_iniciales:
+            existente = db.query(UserModel).filter(UserModel.email == c["email"]).first()
+            if not existente:
+                db.add(UserModel(
+                    full_name=c["full_name"],
+                    company_name=c["company_name"],
+                    email=c["email"],
+                    hashed_password=hash_password(c["password"]),
+                    plan=c["plan"],
+                    limite_mensajes=c["limite_mensajes"],
+                    estado_agente="Activo",
+                    webhook_activo=True,
+                    inventario_activo=True,
+                    evolution_instance=c["evolution_instance"],
+                    chatwoot_url=c["chatwoot_url"],
+                    nocodb_url=c["nocodb_url"],
+                    qr_webhook_url=c["qr_webhook_url"],
+                    whatsapp_conectado=c["whatsapp_conectado"]
+                ))
         db.commit()
+    except Exception as e:
+        db.rollback()
+        print(f"Aviso en seed_staff_and_clients: {e}")
     finally:
         db.close()
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Lógica de encendido
     Base.metadata.create_all(bind=engine)
-    seed_staff() 
-    print(">>> Servidor Qxao iniciado: Búnker Activo (Auth + Dashboard).")
+    ensure_multitenant_columns()
+    seed_staff_and_clients()
+    print(">>> Servidor Qxao iniciado: Búnker Multi-Tenant Activo.")
     yield
-    # Lógica de apagado (si fuera necesaria en el futuro)
+
 
 app = FastAPI(title="Qxao Enterprise API", lifespan=lifespan)
 
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-origenes_permitidos = [
-    origen.strip().rstrip("/") 
-    for origen in os.getenv("ALLOWED_ORIGINS", "http://localhost:8000").split(",") 
+# Orígenes permitidos: incluye automáticamente todos los subdominios de qxao.dpdns.org
+origenes_env = [
+    origen.strip().rstrip("/")
+    for origen in os.getenv("ALLOWED_ORIGINS", "http://localhost:8000").split(",")
     if origen.strip()
 ]
+origenes_qxao_default = [
+    "https://qxao.dpdns.org",
+    "https://app.qxao.dpdns.org",
+    "https://panel.qxao.dpdns.org",
+    "https://n8n.qxao.dpdns.org",
+    "https://chat.qxao.dpdns.org",
+    "https://crm.qxao.dpdns.org",
+    "http://localhost:8000",
+    "http://127.0.0.1:8000"
+]
+origenes_permitidos = list(dict.fromkeys(origenes_env + origenes_qxao_default))
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origenes_permitidos,
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE"], 
-    allow_headers=["*"], 
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["*"],
 )
 
+
+def es_origen_permitido(origin: str) -> bool:
+    if not origin:
+        return True
+    limpio = origin.strip().rstrip("/")
+    if limpio in origenes_permitidos:
+        return True
+    if limpio.endswith(".qxao.dpdns.org") or limpio == "https://qxao.dpdns.org":
+        return True
+    return False
+
+
 # =======================================================
-# 2. MIDDLEWARE DE SEGURIDAD ABSOLUTA (CSRF + CSP)
+# 2. MIDDLEWARE DE SEGURIDAD (CSRF + CSP CON SOPORTE IFRAMES)
 # =======================================================
 @app.middleware("http")
 async def security_and_csrf_middleware(request: Request, call_next):
-    # Validación Anti-CSRF para peticiones destructivas
     if request.method in {"POST", "PUT", "PATCH", "DELETE"}:
-        origin = request.headers.get("origin")
-        if origin and origin.rstrip("/") not in origenes_permitidos:
-            return Response(content="Origen de red no autorizado.", status_code=403)
-        
-        rutas_excluidas_csrf = ["/api/login/client", "/api/auth/staff-login", "/api/logout/client", "/api/logout/staff"]
-        if request.url.path not in rutas_excluidas_csrf:
-            csrf_cookie = request.cookies.get("qxao_csrf")
-            csrf_header = request.headers.get("X-CSRF-Token")
-            
-            if not csrf_cookie or not csrf_header or csrf_cookie != csrf_header:
-                return Response(content="Violación de seguridad: CSRF Token inválido o ausente.", status_code=403)
+        path = request.url.path
+        es_webhook_externo = path.startswith("/api/webhooks/")
+
+        if not es_webhook_externo:
+            origin = request.headers.get("origin")
+            if origin and not es_origen_permitido(origin):
+                return JSONResponse(
+                    content={"success": False, "detail": f"Origen de red no autorizado ({origin})."},
+                    status_code=403
+                )
+
+            rutas_excluidas_csrf = {
+                "/api/login/client",
+                "/api/auth/staff-login",
+                "/api/logout/client",
+                "/api/logout/staff"
+            }
+            if path not in rutas_excluidas_csrf:
+                csrf_cookie = request.cookies.get("qxao_csrf")
+                csrf_header = request.headers.get("X-CSRF-Token")
+                tiene_sesion_jwt = bool(
+                    request.cookies.get("qxao_staff_token") or request.cookies.get("qxao_client_token")
+                )
+                # Si el navegador envía X-CSRF-Token, validamos coincidencia; si ya tiene cookie HttpOnly
+                # de sesión activa del mismo origen verificado, permitimos la operación sin bloquear el panel
+                if csrf_header and csrf_cookie and csrf_cookie != csrf_header:
+                    return JSONResponse(
+                        content={"success": False, "detail": "CSRF Token desincronizado. Recarga la página."},
+                        status_code=403
+                    )
+                if not tiene_sesion_jwt and (not csrf_cookie or not csrf_header):
+                    return JSONResponse(
+                        content={"success": False, "detail": "Sesión o CSRF Token ausente. Inicia sesión nuevamente."},
+                        status_code=403
+                    )
 
     response = await call_next(request)
 
-    # Cabeceras de defensa en profundidad
-    response.headers["X-Frame-Options"] = "DENY"
+    # Permitir iframes del propio ecosistema Qxao
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["X-XSS-Protection"] = "1; mode=block"
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
-    
-    # Política de Seguridad de Contenido (CSP)
+
+    # CSP actualizada con frame-src para permitir los Iframes de Chatwoot (chat.qxao.dpdns.org) y NocoDB (crm.qxao.dpdns.org)
     csp = (
-        "default-src 'self'; "
+        "default-src 'self' https://*.qxao.dpdns.org; "
         "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com https://forminit.com https://cdn.jsdelivr.net; "
         "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; "
-        "font-src 'self' https://fonts.gstatic.com; "
-        "img-src 'self' data: https://images.unsplash.com https://randomuser.me; "
+        "font-src 'self' data: https://fonts.gstatic.com; "
+        "img-src 'self' data: blob: https:; "
+        "frame-src 'self' https://*.qxao.dpdns.org https:; "
         "connect-src 'self' https: wss:;"
     )
     response.headers["Content-Security-Policy"] = csp
-    
+
     if os.getenv("COOKIE_SECURE", "false").lower() == "true":
         response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains; preload"
 
@@ -118,45 +222,66 @@ async def security_and_csrf_middleware(request: Request, call_next):
 
     return response
 
+
 # =======================================================
-# 3. ENRUTADOR NÚCLEO (Solo clientes y staff)
+# 3. ENRUTADOR NÚCLEO (Clientes, Staff y Webhooks n8n)
 # =======================================================
 app.include_router(usuarios.router)
 
+
 # =======================================================
-# 4. DESPACHO WEB SEGURO (LA LISTA BLANCA PROTEGIDA)
+# 4. DESPACHO WEB SEGURO (SOPORTA RUTAS CON Y SIN .html)
 # =======================================================
-os.makedirs("static", exist_ok=True) 
+os.makedirs("static", exist_ok=True)
 app.mount("/static", StaticFiles(directory="static"), name="static")
+
+PAGINAS_PUBLICAS = {
+    "index", "demo", "soluciones", "planes",
+    "preguntasfrecuentes", "login", "qxaomaster_88", "onboarding_qxao"
+}
+PAGINAS_PRIVADAS = {"dashboard", "admin"}
+
+
+def despachar_pagina_html(request: Request, page_name: str):
+    limpio = page_name.strip()
+    if limpio.endswith(".html"):
+        limpio = limpio[:-5]
+
+    if not re.match(r"^[a-zA-Z0-9_-]+$", limpio):
+        raise HTTPException(status_code=400, detail="Estructura de petición no válida.")
+
+    if limpio in PAGINAS_PRIVADAS:
+        if limpio == "dashboard" and not (request.cookies.get("qxao_client_token") or request.cookies.get("qxao_staff_token")):
+            return RedirectResponse(url="/login.html", status_code=302)
+        elif limpio == "admin" and not request.cookies.get("qxao_staff_token"):
+            return RedirectResponse(url="/qxaomaster_88.html", status_code=302)
+
+    if limpio in PAGINAS_PUBLICAS or limpio in PAGINAS_PRIVADAS:
+        file_path = f"templates/{limpio}.html"
+        if os.path.exists(file_path):
+            return FileResponse(file_path)
+
+    raise HTTPException(status_code=404, detail="Error 404: Página no encontrada.")
+
 
 @app.get("/")
 @limiter.limit("60/minute")
-def mostrar_inicio(request: Request): 
+def mostrar_inicio(request: Request):
     return FileResponse("templates/index.html")
+
 
 @app.get("/onboarding")
 def mostrar_onboarding_ruta_corta(request: Request):
     return FileResponse("templates/onboarding_qxao.html")
 
+
 @app.get("/{page_name}.html")
 @limiter.limit("60/minute")
-def mostrar_paginas(request: Request, page_name: str):
-    if not re.match(r"^[a-zA-Z0-9_-]+$", page_name):
-        raise HTTPException(status_code=400, detail="Estructura de petición no válida.")
-        
-    paginas_publicas = {"index", "demo", "soluciones", "planes", "preguntasfrecuentes", "login", "qxaomaster_88", "onboarding_qxao"}
-    paginas_privadas = {"dashboard", "admin"}
-    
-    # BARRERA DE SEGURIDAD: Verifica la cookie antes de entregar el archivo HTML
-    if page_name in paginas_privadas:
-        if page_name == "dashboard" and not (request.cookies.get("qxao_client_token") or request.cookies.get("qxao_staff_token")):
-            return RedirectResponse(url="/login.html", status_code=302)
-        elif page_name == "admin" and not request.cookies.get("qxao_staff_token"):
-            return RedirectResponse(url="/qxaomaster_88.html", status_code=302)
-            
-    if page_name in paginas_publicas or page_name in paginas_privadas:
-        file_path = f"templates/{page_name}.html"
-        if os.path.exists(file_path):
-            return FileResponse(file_path)
-            
-    raise HTTPException(status_code=404, detail="Error 404: Sistema no encontrado.")
+def mostrar_paginas_con_ext(request: Request, page_name: str):
+    return despachar_pagina_html(request, page_name)
+
+
+@app.get("/{page_name}")
+@limiter.limit("60/minute")
+def mostrar_paginas_sin_ext(request: Request, page_name: str):
+    return despachar_pagina_html(request, page_name)

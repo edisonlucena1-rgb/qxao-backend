@@ -224,6 +224,16 @@
             }
         ];
         function apiUrl(p) { const o = window.location.origin; return (o && o !== 'null' && !o.startsWith('file')) ? o + p : p; }
+        function getCsrfToken() {
+            const m = document.cookie.match(/(?:^|; )qxao_csrf=([^;]*)/);
+            return m ? decodeURIComponent(m[1]) : "";
+        }
+        function buildHeaders(extra = {}) {
+            const h = { ...extra };
+            const csrf = getCsrfToken();
+            if (csrf) h["X-CSRF-Token"] = csrf;
+            return h;
+        }
         let isOfflineDemo = false;
 
         function notificarAdmin(msg) {
@@ -306,8 +316,8 @@
         async function cargarDatosAdmin() {
             try {
                 const [resStats, resUsers] = await Promise.all([
-                    fetch(apiUrl("/api/admin/stats")),
-                    fetch(apiUrl("/api/admin/users"))
+                    fetch(apiUrl("/api/admin/stats"), { credentials: "include" }),
+                    fetch(apiUrl("/api/admin/users"), { credentials: "include" })
                 ]);
                 if (!resUsers.ok) throw new Error("Modo demostración");
                 const usersData = await resUsers.json();
@@ -397,16 +407,17 @@
                     if (!isOfflineDemo) {
                         await fetch(apiUrl("/api/admin/impersonate"), {
                             method: "POST",
-                            headers: { "Content-Type": "application/json" },
+                            credentials: "include",
+                            headers: buildHeaders({ "Content-Type": "application/json" }),
                             body: JSON.stringify({ email })
                         });
                     }
-                    window.location.assign("/dashboard");
+                    window.location.assign("/dashboard.html");
                 } else if (action === "reprovision") {
                     const id = btn.getAttribute("data-id");
                     notificarAdmin("Enviando orden de aprovisionamiento a n8n...");
                     if (!isOfflineDemo) {
-                        await fetch(apiUrl(`/api/admin/users/${id}/reprovision`), { method: "POST" });
+                        await fetch(apiUrl(`/api/admin/users/${id}/reprovision`), { method: "POST", credentials: "include", headers: buildHeaders() });
                         await cargarDatosAdmin();
                     }
                     notificarAdmin("Webhook enviado a n8n ('Gerente General')");
@@ -453,19 +464,23 @@
                 const method = editId ? "PUT" : "POST";
 
                 try {
-                    const res = await fetch(url, {
+                    const errEl = document.getElementById("modal-error");
+                    errEl.classList.add("hidden");
+                    const res = await fetch(apiUrl(url), {
                         method,
-                        headers: { "Content-Type": "application/json" },
+                        credentials: "include",
+                        headers: buildHeaders({ "Content-Type": "application/json" }),
                         body: JSON.stringify(payload)
                     });
-                    const data = await res.json();
-                    if (data.success) {
+                    const rawText = await res.text();
+                    let data = {};
+                    try { data = JSON.parse(rawText); } catch (_) { data = { success: false, detail: rawText || ("Error HTTP " + res.status) }; }
+                    if (res.ok && data.success) {
                         cerrarModal();
                         await cargarDatosAdmin();
-                        notificarAdmin(editId ? "Cliente actualizado" : "Cliente creado y aprovisionado en n8n");
+                        notificarAdmin(editId ? "Cliente actualizado correctamente" : "Cliente creado y aprovisionado");
                     } else {
-                        const errEl = document.getElementById("modal-error");
-                        errEl.textContent = data.detail || "Error al guardar";
+                        errEl.textContent = data.detail || ("No se pudo guardar (HTTP " + res.status + ")");
                         errEl.classList.remove("hidden");
                     }
                 } catch (err) {
@@ -475,9 +490,9 @@
 
             document.getElementById("btn-admin-logout").addEventListener("click", async () => {
                 try {
-                    await fetch(apiUrl("/api/logout/staff"), { method: "POST" });
+                    await fetch(apiUrl("/api/logout/staff"), { method: "POST", credentials: "include", headers: buildHeaders() });
                 } catch (e) {}
-                window.location.assign("/qxaomaster_88");
+                window.location.assign("/qxaomaster_88.html");
             });
         });
     </script>

@@ -354,6 +354,16 @@
         };
 
         function apiUrl(p) { const o = window.location.origin; return (o && o !== 'null' && !o.startsWith('file')) ? o + p : p; }
+        function getCsrfToken() {
+            const m = document.cookie.match(/(?:^|; )qxao_csrf=([^;]*)/);
+            return m ? decodeURIComponent(m[1]) : "";
+        }
+        function buildHeaders(extra = {}) {
+            const h = { ...extra };
+            const csrf = getCsrfToken();
+            if (csrf) h["X-CSRF-Token"] = csrf;
+            return h;
+        }
         let currentProfile = null;
         let isDemoMode = false;
 
@@ -498,7 +508,7 @@
         async function cargarDashboard() {
             verificarImpersonacion();
             try {
-                const res = await fetch(apiUrl("/api/client/dashboard"));
+                const res = await fetch(apiUrl("/api/client/dashboard"), { credentials: "include" });
                 if (!res.ok) throw new Error("Modo local o sin sesión");
                 const data = await res.json();
                 renderizarPerfil(data);
@@ -522,7 +532,7 @@
                 return;
             }
             try {
-                const res = await fetch(endpoint, { method: "POST" });
+                const res = await fetch(apiUrl(endpoint), { method: "POST", credentials: "include", headers: buildHeaders() });
                 if (res.ok) {
                     const out = await res.json();
                     if (currentProfile && campoLocal in out) {
@@ -554,7 +564,7 @@
             }
 
             try {
-                const res = await fetch(apiUrl("/api/client/qr"), { method: "POST" });
+                const res = await fetch(apiUrl("/api/client/qr"), { method: "POST", credentials: "include", headers: buildHeaders() });
                 const data = await res.json();
 
                 if (data.whatsapp_conectado || data.status === "CONNECTED") {
@@ -613,12 +623,12 @@
                     sessionStorage.removeItem("is_impersonating");
                     sessionStorage.removeItem("impersonate_email");
                 } catch (e) {}
-                window.location.assign("/admin");
+                window.location.assign("/admin.html");
             });
 
             document.getElementById("btn-logout").addEventListener("click", async () => {
                 try {
-                    await fetch(apiUrl("/api/logout/client"), { method: "POST" });
+                    await fetch(apiUrl("/api/logout/client"), { method: "POST", credentials: "include", headers: buildHeaders() });
                 } catch (e) {}
                 window.location.assign("/");
             });

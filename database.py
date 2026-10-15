@@ -5,11 +5,9 @@ from sqlalchemy.orm import sessionmaker
 
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./qxao.db")
 
-# Corrección de prefijo para PostgreSQL en SQLAlchemy
 if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
-# Optimización de conexiones: Evita bloqueos en SQLite y caídas en Postgres
 if DATABASE_URL.startswith("sqlite"):
     engine = create_engine(
         DATABASE_URL,
@@ -27,9 +25,6 @@ else:
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
-# ============================================================
-# MODELOS DE BASE DE DATOS (NÚCLEO EMPRESARIAL MULTI-TENANT)
-# ============================================================
 
 class UserModel(Base):
     __tablename__ = "users"
@@ -45,14 +40,14 @@ class UserModel(Base):
     estado_agente = Column(String, default="Activo")
     webhook_activo = Column(Boolean, default=True)
     inventario_activo = Column(Boolean, default=True)
-    token_version = Column(Integer, default=1)  # CONTROL DE REVOCACIÓN JWT
+    token_version = Column(Integer, default=1)
 
     # CAMPOS MULTI-TENANT (MARCA BLANCA POR CLIENTE)
-    evolution_instance = Column(String, nullable=True, index=True)  # Ej: "jl_burger", "engranos"
-    chatwoot_url = Column(String, nullable=True)                    # URL de bandeja Chatwoot para Iframe
-    nocodb_url = Column(String, nullable=True)                      # URL de vista/tabla NocoDB para Iframe
-    qr_webhook_url = Column(String, nullable=True)                  # Webhook QR específico (opcional)
-    whatsapp_conectado = Column(Boolean, default=False)             # Estado de conexión de Evolution API
+    evolution_instance = Column(String, nullable=True, index=True)
+    chatwoot_url = Column(String, nullable=True)
+    nocodb_url = Column(String, nullable=True)
+    qr_webhook_url = Column(String, nullable=True)
+    whatsapp_conectado = Column(Boolean, default=False)
 
 
 class StaffModel(Base):
@@ -63,7 +58,7 @@ class StaffModel(Base):
     hashed_password = Column(String)
     rol = Column(String)
     is_active = Column(Boolean, default=True)
-    token_version = Column(Integer, default=1)  # CONTROL DE REVOCACIÓN JWT
+    token_version = Column(Integer, default=1)
 
 
 class ErrorLogModel(Base):
@@ -74,15 +69,12 @@ class ErrorLogModel(Base):
     timestamp = Column(String)
 
 
-# Inicialización de tablas nuevas
 Base.metadata.create_all(bind=engine)
 
 
 def ensure_multitenant_columns():
     """
-    Auto-migración segura e idempotente:
-    Si la tabla 'users' ya existe en PostgreSQL o SQLite sin las columnas multi-tenant,
-    las agrega automáticamente al arrancar sin perder datos existentes.
+    Auto-migración segura e idempotente para PostgreSQL y SQLite.
     """
     nuevas_columnas = {
         "evolution_instance": "VARCHAR(150)",
@@ -100,15 +92,31 @@ def ensure_multitenant_columns():
             for col_name, col_type in nuevas_columnas.items():
                 if col_name not in columnas_actuales:
                     conn.execute(text(f"ALTER TABLE users ADD COLUMN {col_name} {col_type}"))
-                    print(f"🟢 Columna multi-tenant agregada automáticamente: users.{col_name}")
+                    print(f"Columna multi-tenant agregada: users.{col_name}")
+
+            cw = "https://chat.qxao.dpdns.org/app/accounts/2/dashboard"
+            nc_jl = "https://crm.qxao.dpdns.org/wgai29by/pi4c3iginxwezws"
+            qr_jl = "https://n8n.qxao.dpdns.org/webhook/obtener-qr-jlburger"
+            nc_en = "https://crm.qxao.dpdns.org/wgai29by/p96tfdcx3ish0pv"
+            qr_en = "https://n8n.qxao.dpdns.org/webhook/obtener-qr-engranos"
+
+            conn.execute(text(
+                f"UPDATE users SET evolution_instance='JLBurguer.', chatwoot_url='{cw}', nocodb_url='{nc_jl}', qr_webhook_url='{qr_jl}' "
+                f"WHERE (LOWER(company_name) LIKE '%burger%' OR LOWER(company_name) LIKE '%burguer%' OR LOWER(email) LIKE '%burger%') "
+                f"AND (chatwoot_url IS NULL OR chatwoot_url = '')"
+            ))
+            conn.execute(text(
+                f"UPDATE users SET evolution_instance='pisa62', chatwoot_url='{cw}', nocodb_url='{nc_en}', qr_webhook_url='{qr_en}' "
+                f"WHERE (LOWER(company_name) LIKE '%engrano%' OR LOWER(full_name) LIKE '%yolanda%' OR LOWER(email) LIKE '%engrano%') "
+                f"AND (chatwoot_url IS NULL OR chatwoot_url = '')"
+            ))
     except Exception as e:
-        print(f"⚠️ Aviso al verificar columnas multi-tenant: {e}")
+        print(f"Aviso al verificar columnas multi-tenant: {e}")
 
 
 ensure_multitenant_columns()
 
 
-# Inyección de dependencias para FastAPI
 def get_db():
     db = SessionLocal()
     try:
