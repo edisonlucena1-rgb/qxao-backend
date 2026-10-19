@@ -33,6 +33,13 @@ N8N_QR_WEBHOOK_URL = os.getenv(
     "https://n8n.qxao.dpdns.org/webhook/obtener-qr-jlburger"
 )
 N8N_WEBHOOK_SECRET = os.getenv("N8N_WEBHOOK_SECRET", "")
+N8N_BASE_URL = os.getenv("N8N_BASE_URL", "https://n8n.qxao.dpdns.org").rstrip("/")
+N8N_API_KEY = os.getenv(
+    "N8N_API_KEY",
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJLYTM2ZjViOC05MjdhLTQ4ZTMtYTgxMC04OGRhYzU4ZjhjYTkiLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWNhbmRpiJoin2I4Y2E3MTktYzZINS00YjY5LWIzODatZDcyNjE2ODQyZGMwLiwiaWF0IjoxNzkyMTA5NDI5LCJleHAiOjE3OTQ2MzI0MDB9.nrIKfdIwqHBVBLIrzFtaGOSMQX1El_PwDJNNPXX_J1w"
+)
+EVOLUTION_BASE_URL = os.getenv("EVOLUTION_BASE_URL", "https://evolution.qxao.dpdns.org").rstrip("/")
+EVOLUTION_API_KEY = os.getenv("EVOLUTION_API_KEY", "429683C4C977415CAAFCCE10F7D57E11")
 
 DEFAULT_CHATWOOT_URL = os.getenv(
     "DEFAULT_CHATWOOT_URL",
@@ -92,6 +99,42 @@ def autocompletar_ecosistema_conocido(user: UserModel, db: Optional[Session] = N
             modificado = True
         if not user.qr_webhook_url:
             user.qr_webhook_url = "https://n8n.qxao.dpdns.org/webhook/obtener-qr-engranos"
+            modificado = True
+
+    elif "matias" in texto:
+        if not user.evolution_instance or "{{" in str(user.evolution_instance):
+            user.evolution_instance = "matias_ca"
+            modificado = True
+        if not user.chatwoot_url:
+            user.chatwoot_url = DEFAULT_CHATWOOT_URL
+            modificado = True
+        if not user.nocodb_url:
+            user.nocodb_url = DEFAULT_NOCODB_URL
+            modificado = True
+        if not user.qr_webhook_url:
+            user.qr_webhook_url = f"{N8N_BASE_URL}/webhook/obtener-qr-matias_ca"
+            modificado = True
+
+    elif "rikiwey" in texto:
+        if not user.evolution_instance or "{{" in str(user.evolution_instance):
+            user.evolution_instance = "rikiwey"
+            modificado = True
+        if not user.chatwoot_url:
+            user.chatwoot_url = DEFAULT_CHATWOOT_URL
+            modificado = True
+        if not user.nocodb_url:
+            user.nocodb_url = DEFAULT_NOCODB_URL
+            modificado = True
+        if not user.qr_webhook_url:
+            user.qr_webhook_url = f"{N8N_BASE_URL}/webhook/obtener-qr-rikiwey"
+            modificado = True
+
+    else:
+        if not user.evolution_instance or "{{" in str(user.evolution_instance):
+            user.evolution_instance = generar_slug_instancia(user.company_name)
+            modificado = True
+        if not user.qr_webhook_url:
+            user.qr_webhook_url = f"{N8N_BASE_URL}/webhook/obtener-qr-{user.evolution_instance}"
             modificado = True
 
     if modificado and db is not None:
@@ -455,9 +498,142 @@ class CreateUserRequest(BaseModel):
     auto_provision_n8n: Optional[bool] = True
 
 
+def crear_instancia_evolution_directa(instancia: str) -> dict:
+    if not EVOLUTION_BASE_URL or not EVOLUTION_API_KEY:
+        return {"created": False, "reason": "Sin credenciales Evolution API"}
+    url = f"{EVOLUTION_BASE_URL}/instance/create"
+    payload = {
+        "instanceName": instancia,
+        "qrcode": True,
+        "integration": "WHATSAPP-BAILEYS"
+    }
+    req = urllib.request.Request(
+        url,
+        data=json.dumps(payload).encode("utf-8"),
+        headers={
+            "Content-Type": "application/json",
+            "apikey": EVOLUTION_API_KEY,
+            "User-Agent": "QxaoBackend/2.0"
+        },
+        method="POST"
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            return {"created": True, "data": json.loads(resp.read().decode("utf-8"))}
+    except urllib.error.HTTPError as he:
+        return {"created": False, "http_code": he.code}
+    except Exception as e:
+        return {"created": False, "error": str(e)}
+
+
+def crear_workflow_cliente_n8n_directo(user: UserModel, instancia: str) -> Optional[dict]:
+    """
+    Crea directamente el Workflow del cliente en n8n vía API REST (POST /api/v1/workflows)
+    si aún no existe en la lista de Workflows, evitando depender de importar JSON manualmente.
+    """
+    if not N8N_BASE_URL or not N8N_API_KEY:
+        return None
+    headers = {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "X-N8N-API-KEY": N8N_API_KEY,
+        "User-Agent": "QxaoBackend/2.0"
+    }
+    target_name = f"[{user.company_name}] Agente IA Qxao ({user.plan})"
+    try:
+        list_req = urllib.request.Request(f"{N8N_BASE_URL}/api/v1/workflows?limit=100", headers=headers, method="GET")
+        with urllib.request.urlopen(list_req, timeout=15) as resp:
+            wf_list = json.loads(resp.read().decode("utf-8")).get("data", [])
+            for wf in wf_list:
+                if wf.get("name", "").strip().lower() == target_name.strip().lower() or f"[{user.company_name.lower()}]" in wf.get("name", "").lower():
+                    return {"id": wf.get("id"), "name": wf.get("name"), "already_existed": True}
+    except Exception as e:
+        print(f"Aviso listando workflows en n8n: {e}")
+
+    wf_payload = {
+        "name": target_name,
+        "nodes": [
+            {
+                "parameters": {
+                    "httpMethod": "POST",
+                    "path": f"agente-{instancia}",
+                    "options": {}
+                },
+                "name": f"Webhook Evolution ({instancia})",
+                "type": "n8n-nodes-base.webhook",
+                "typeVersion": 2,
+                "position": [260, 300]
+            },
+            {
+                "parameters": {
+                    "httpMethod": "GET",
+                    "path": f"obtener-qr-{instancia}",
+                    "responseMode": "lastNode",
+                    "options": {}
+                },
+                "name": f"Webhook QR ({instancia})",
+                "type": "n8n-nodes-base.webhook",
+                "typeVersion": 2,
+                "position": [260, 520]
+            },
+            {
+                "parameters": {
+                    "method": "GET",
+                    "url": f"{EVOLUTION_BASE_URL}/instance/connect/{instancia}",
+                    "sendHeaders": True,
+                    "headerParameters": {
+                        "parameters": [
+                            {"name": "apikey", "value": EVOLUTION_API_KEY}
+                        ]
+                    },
+                    "options": {}
+                },
+                "name": "Obtener QR Evolution API",
+                "type": "n8n-nodes-base.httpRequest",
+                "typeVersion": 4.2,
+                "position": [520, 520]
+            }
+        ],
+        "connections": {
+            f"Webhook QR ({instancia})": {
+                "main": [[{"node": "Obtener QR Evolution API", "type": "main", "index": 0}]]
+            }
+        },
+        "settings": {"executionOrder": "v1"}
+    }
+    try:
+        create_req = urllib.request.Request(
+            f"{N8N_BASE_URL}/api/v1/workflows",
+            data=json.dumps(wf_payload).encode("utf-8"),
+            headers=headers,
+            method="POST"
+        )
+        with urllib.request.urlopen(create_req, timeout=20) as resp:
+            created_wf = json.loads(resp.read().decode("utf-8"))
+            wf_id = created_wf.get("id")
+            if wf_id:
+                try:
+                    act_req = urllib.request.Request(
+                        f"{N8N_BASE_URL}/api/v1/workflows/{wf_id}/activate",
+                        data=b"{}",
+                        headers=headers,
+                        method="POST"
+                    )
+                    urllib.request.urlopen(act_req, timeout=10).read()
+                except Exception:
+                    pass
+            return created_wf
+    except Exception as e:
+        print(f"Error creando workflow en n8n vía API: {e}")
+        return None
+
+
 def aprovisionar_cliente_en_n8n(user: UserModel, db: Session) -> dict:
-    if not N8N_CREATE_CLIENT_WEBHOOK_URL:
-        return {"provisioned": False, "reason": "N8N_CREATE_CLIENT_WEBHOOK_URL no configurada"}
+    instancia = (user.evolution_instance or "").strip()
+    if not instancia or "{{" in instancia:
+        instancia = generar_slug_instancia(user.company_name)
+        user.evolution_instance = instancia
+        db.commit()
 
     payload = {
         "event": "client.created",
@@ -467,34 +643,44 @@ def aprovisionar_cliente_en_n8n(user: UserModel, db: Session) -> dict:
         "email": user.email,
         "plan": user.plan,
         "limite_mensajes": user.limite_mensajes,
-        "evolution_instance": user.evolution_instance
+        "evolution_instance": instancia
     }
-    resp = llamar_webhook_n8n(N8N_CREATE_CLIENT_WEBHOOK_URL, payload, timeout=20, prefer_get=False)
-    if not resp:
-        db.add(ErrorLogModel(
-            user_id=user.id,
-            mensaje="Aviso: No se obtuvo respuesta inmediata del Webhook Gerente General en n8n.",
-            timestamp=datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
-        ))
-        db.commit()
-        return {"provisioned": False, "reason": "Sin respuesta del webhook n8n"}
 
-    if resp.get("evolution_instance"):
-        user.evolution_instance = resp["evolution_instance"]
-    if resp.get("chatwoot_url"):
-        user.chatwoot_url = resp["chatwoot_url"]
-    if resp.get("nocodb_url"):
-        user.nocodb_url = resp["nocodb_url"]
-    if resp.get("qr_webhook_url"):
-        user.qr_webhook_url = resp["qr_webhook_url"]
+    resp = llamar_webhook_n8n(N8N_CREATE_CLIENT_WEBHOOK_URL, payload, timeout=20, prefer_get=False) if N8N_CREATE_CLIENT_WEBHOOK_URL else None
+    evo_direct = crear_instancia_evolution_directa(instancia)
+    wf_direct = crear_workflow_cliente_n8n_directo(user, instancia)
 
+    if resp and isinstance(resp, dict):
+        if resp.get("evolution_instance") and "{{" not in str(resp.get("evolution_instance")):
+            user.evolution_instance = resp["evolution_instance"]
+        if resp.get("chatwoot_url"):
+            user.chatwoot_url = resp["chatwoot_url"]
+        if resp.get("nocodb_url"):
+            user.nocodb_url = resp["nocodb_url"]
+        if resp.get("qr_webhook_url"):
+            user.qr_webhook_url = resp["qr_webhook_url"]
+
+    if not user.qr_webhook_url:
+        user.qr_webhook_url = f"{N8N_BASE_URL}/webhook/obtener-qr-{user.evolution_instance}"
+    if not user.chatwoot_url:
+        user.chatwoot_url = DEFAULT_CHATWOOT_URL
+    if not user.nocodb_url:
+        user.nocodb_url = DEFAULT_NOCODB_URL
+
+    provisioned_ok = bool(resp or evo_direct.get("created") or wf_direct)
+    wf_info = f", Workflow n8n: {wf_direct.get('id')}" if isinstance(wf_direct, dict) and wf_direct.get("id") else ""
     db.add(ErrorLogModel(
         user_id=user.id,
-        mensaje=f"Ecosistema aprovisionado vía n8n (Instancia: {user.evolution_instance}).",
+        mensaje=f"Ecosistema aprovisionado (Instancia: {user.evolution_instance}{wf_info}).",
         timestamp=datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
     ))
     db.commit()
-    return {"provisioned": True, "n8n_response": resp}
+    return {
+        "provisioned": provisioned_ok,
+        "n8n_response": resp,
+        "evolution_direct": evo_direct,
+        "n8n_workflow": wf_direct
+    }
 
 
 @router.post("/api/admin/users")
