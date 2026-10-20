@@ -18,14 +18,16 @@ from rutas import usuarios
 
 
 # =======================================================
-# 1. LIFESPAN: INICIALIZACIÓN DE STAFF Y CLIENTES BASE
+# 1. LIFESPAN: INICIALIZACIÓN DEL STAFF MASTER (los clientes entran solo por el admin)
 # =======================================================
-def seed_staff_and_clients():
+def seed_staff():
     db = SessionLocal()
     try:
         master_email = os.getenv("MASTER_EMAIL", "admin@qxao.com")
         master_pass = os.getenv("MASTER_PASSWORD", "TuContrasenaSuperSecretaAqui!")
 
+        if master_pass == "TuContrasenaSuperSecretaAqui!":
+            print("AVISO: MASTER_PASSWORD sigue con el valor de ejemplo; define una contraseña real en el entorno.")
         if master_email and master_pass:
             if not db.query(StaffModel).filter(StaffModel.email == master_email).first():
                 db.add(StaffModel(
@@ -36,60 +38,9 @@ def seed_staff_and_clients():
                     is_active=True
                 ))
                 db.commit()
-
-        # Auto-registro seguro de clientes actuales si aún no existen en la base de datos
-        clientes_iniciales = [
-            {
-                "full_name": "Jorge Suárez",
-                "company_name": "JL Burger",
-                "email": "contacto@jlburger.com",
-                "password": os.getenv("JLBURGER_DEFAULT_PASSWORD", "JLBurger2026!"),
-                "plan": "Pro",
-                "limite_mensajes": 5000,
-                "evolution_instance": "JLBurguer.",
-                "chatwoot_url": "https://chat.qxao.dpdns.org/app/accounts/2/dashboard",
-                "nocodb_url": "https://crm.qxao.dpdns.org/wgai29by/pi4c3iginxwezws",
-                "qr_webhook_url": "https://n8n.qxao.dpdns.org/webhook/obtener-qr-jlburger",
-                "whatsapp_conectado": True
-            },
-            {
-                "full_name": "Yolanda Engranos",
-                "company_name": "Engranos C.A",
-                "email": "operaciones@engranos.com",
-                "password": os.getenv("ENGRANOS_DEFAULT_PASSWORD", "Engranos2026!"),
-                "plan": "Enterprise",
-                "limite_mensajes": 50000,
-                "evolution_instance": "pisa62",
-                "chatwoot_url": "https://chat.qxao.dpdns.org/app/accounts/2/dashboard",
-                "nocodb_url": "https://crm.qxao.dpdns.org/wgai29by/p96tfdcx3ish0pv",
-                "qr_webhook_url": "https://n8n.qxao.dpdns.org/webhook/obtener-qr-engranos",
-                "whatsapp_conectado": True
-            }
-        ]
-
-        for c in clientes_iniciales:
-            existente = db.query(UserModel).filter(UserModel.email == c["email"]).first()
-            if not existente:
-                db.add(UserModel(
-                    full_name=c["full_name"],
-                    company_name=c["company_name"],
-                    email=c["email"],
-                    hashed_password=hash_password(c["password"]),
-                    plan=c["plan"],
-                    limite_mensajes=c["limite_mensajes"],
-                    estado_agente="Activo",
-                    webhook_activo=True,
-                    inventario_activo=True,
-                    evolution_instance=c["evolution_instance"],
-                    chatwoot_url=c["chatwoot_url"],
-                    nocodb_url=c["nocodb_url"],
-                    qr_webhook_url=c["qr_webhook_url"],
-                    whatsapp_conectado=c["whatsapp_conectado"]
-                ))
-        db.commit()
     except Exception as e:
         db.rollback()
-        print(f"Aviso en seed_staff_and_clients: {e}")
+        print(f"Aviso en seed_staff: {e}")
     finally:
         db.close()
 
@@ -98,7 +49,7 @@ def seed_staff_and_clients():
 async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
     ensure_multitenant_columns()
-    seed_staff_and_clients()
+    seed_staff()
     print(">>> Servidor Qxao iniciado: Búnker Multi-Tenant Activo.")
     yield
 
