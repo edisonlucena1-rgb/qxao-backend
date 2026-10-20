@@ -48,6 +48,8 @@ class UserModel(Base):
     nocodb_url = Column(String, nullable=True)
     qr_webhook_url = Column(String, nullable=True)
     whatsapp_conectado = Column(Boolean, default=False)
+    provision_status = Column(String, default="pendiente")  # pendiente | activo | error
+    provision_error = Column(String, nullable=True)
 
 
 class StaffModel(Base):
@@ -81,7 +83,9 @@ def ensure_multitenant_columns():
         "chatwoot_url": "TEXT",
         "nocodb_url": "TEXT",
         "qr_webhook_url": "TEXT",
-        "whatsapp_conectado": "BOOLEAN DEFAULT FALSE"
+        "whatsapp_conectado": "BOOLEAN DEFAULT FALSE",
+        "provision_status": "VARCHAR(20) DEFAULT 'pendiente'",
+        "provision_error": "TEXT"
     }
     try:
         inspector = inspect(engine)
@@ -93,23 +97,6 @@ def ensure_multitenant_columns():
                 if col_name not in columnas_actuales:
                     conn.execute(text(f"ALTER TABLE users ADD COLUMN {col_name} {col_type}"))
                     print(f"Columna multi-tenant agregada: users.{col_name}")
-
-            cw = "https://chat.qxao.dpdns.org/app/accounts/2/dashboard"
-            nc_jl = "https://crm.qxao.dpdns.org/wgai29by/pi4c3iginxwezws"
-            qr_jl = "https://n8n.qxao.dpdns.org/webhook/obtener-qr-jlburger"
-            nc_en = "https://crm.qxao.dpdns.org/wgai29by/p96tfdcx3ish0pv"
-            qr_en = "https://n8n.qxao.dpdns.org/webhook/obtener-qr-engranos"
-
-            conn.execute(text(
-                f"UPDATE users SET evolution_instance='JLBurguer.', chatwoot_url='{cw}', nocodb_url='{nc_jl}', qr_webhook_url='{qr_jl}' "
-                f"WHERE (LOWER(company_name) LIKE '%burger%' OR LOWER(company_name) LIKE '%burguer%' OR LOWER(email) LIKE '%burger%') "
-                f"AND (chatwoot_url IS NULL OR chatwoot_url = '')"
-            ))
-            conn.execute(text(
-                f"UPDATE users SET evolution_instance='pisa62', chatwoot_url='{cw}', nocodb_url='{nc_en}', qr_webhook_url='{qr_en}' "
-                f"WHERE (LOWER(company_name) LIKE '%engrano%' OR LOWER(full_name) LIKE '%yolanda%' OR LOWER(email) LIKE '%engrano%') "
-                f"AND (chatwoot_url IS NULL OR chatwoot_url = '')"
-            ))
     except Exception as e:
         print(f"Aviso al verificar columnas multi-tenant: {e}")
 

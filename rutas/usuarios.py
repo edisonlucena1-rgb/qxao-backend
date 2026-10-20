@@ -1,5 +1,6 @@
 import os
 import re
+import hmac
 import json
 import urllib.request
 import urllib.parse
@@ -22,33 +23,25 @@ from security import (
 router = APIRouter()
 
 # ==================================================
-# VARIABLES DE ENTORNO Y DOMINIOS REALES QXAO
+# VARIABLES DE ENTORNO (NINGUNA CLAVE VA ESCRITA EN EL CÓDIGO)
+# Backend -> n8n: el backend solo habla con los webhooks de n8n.
+# n8n es quien habla con Evolution, Chatwoot y NocoDB.
 # ==================================================
+N8N_BASE_URL = os.getenv("N8N_BASE_URL", "https://n8n.qxao.dpdns.org").rstrip("/")
 N8N_CREATE_CLIENT_WEBHOOK_URL = os.getenv(
-    "N8N_CREATE_CLIENT_WEBHOOK_URL",
-    "https://n8n.qxao.dpdns.org/webhook/qxao-crear-cliente"
+    "N8N_CREATE_CLIENT_WEBHOOK_URL", f"{N8N_BASE_URL}/webhook/qxao-crear-cliente"
+)
+N8N_DELETE_CLIENT_WEBHOOK_URL = os.getenv(
+    "N8N_DELETE_CLIENT_WEBHOOK_URL", f"{N8N_BASE_URL}/webhook/qxao-eliminar-cliente"
 )
 N8N_QR_WEBHOOK_URL = os.getenv(
-    "N8N_QR_WEBHOOK_URL",
-    "https://n8n.qxao.dpdns.org/webhook/obtener-qr-jlburger"
+    "N8N_QR_WEBHOOK_URL", f"{N8N_BASE_URL}/webhook/qxao-obtener-qr"
 )
 N8N_WEBHOOK_SECRET = os.getenv("N8N_WEBHOOK_SECRET", "")
-N8N_BASE_URL = os.getenv("N8N_BASE_URL", "https://n8n.qxao.dpdns.org").rstrip("/")
-N8N_API_KEY = os.getenv(
-    "N8N_API_KEY",
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJLYTM2ZjViOC05MjdhLTQ4ZTMtYTgxMC04OGRhYzU4ZjhjYTkiLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWNhbmRpiJoin2I4Y2E3MTktYzZINS00YjY5LWIzODatZDcyNjE2ODQyZGMwLiwiaWF0IjoxNzkyMTA5NDI5LCJleHAiOjE3OTQ2MzI0MDB9.nrIKfdIwqHBVBLIrzFtaGOSMQX1El_PwDJNNPXX_J1w"
-)
-EVOLUTION_BASE_URL = os.getenv("EVOLUTION_BASE_URL", "https://evolution.qxao.dpdns.org").rstrip("/")
-EVOLUTION_API_KEY = os.getenv("EVOLUTION_API_KEY", "429683C4C977415CAAFCCE10F7D57E11")
 
-DEFAULT_CHATWOOT_URL = os.getenv(
-    "DEFAULT_CHATWOOT_URL",
-    "https://chat.qxao.dpdns.org/app/accounts/2/dashboard"
-)
-DEFAULT_NOCODB_URL = os.getenv(
-    "DEFAULT_NOCODB_URL",
-    "https://crm.qxao.dpdns.org/wgai29by"
-)
+# Sin valores por defecto: cada cliente recibe sus propias URLs desde n8n.
+DEFAULT_CHATWOOT_URL = os.getenv("DEFAULT_CHATWOOT_URL", "")
+DEFAULT_NOCODB_URL = os.getenv("DEFAULT_NOCODB_URL", "")
 
 
 class LoginRequest(BaseModel):
@@ -57,106 +50,56 @@ class LoginRequest(BaseModel):
 
 
 # ==================================================
-# AUTO-DETECCIÓN INTELIGENTE DE ECOSISTEMAS REALES
+# UTILIDADES
 # ==================================================
 def generar_slug_instancia(company_name: str) -> str:
     limpio = re.sub(r"[^a-zA-Z0-9]+", "_", (company_name or "cliente").strip().lower()).strip("_")
     return limpio or "cliente_qxao"
 
 
-def autocompletar_ecosistema_conocido(user: UserModel, db: Optional[Session] = None) -> None:
+def instancia_unica(db: Session, base: str, excluir_id: Optional[int] = None) -> str:
+    """Devuelve un nombre de instancia que no esté usado por otro cliente."""
+    candidato = base
+    n = 2
+    while db.query(UserModel).filter(
+        UserModel.evolution_instance == candidato,
+        UserModel.id != (excluir_id or 0)
+    ).first():
+        candidato = f"{base}_{n}"
+        n += 1
+    return candidato
+
+
+def ahora() -> str:
+    return datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+
+
+def registrar(db: Session, user_id: int, mensaje: str) -> None:
+    db.add(ErrorLogModel(user_id=user_id, mensaje=mensaje, timestamp=ahora()))
+
+
+def llamar_webhook_n8n(
+    url: str,
+    payload: dict,
+    timeout: int = 20,
+    prefer_get: bool = False,
+    only_post: bool = False
+) -> Optional[dict]:
     """
-    Si un cliente existente (como JL Burger o Engranos) aún tiene vacías sus columnas
-    multi-tenant en la base de datos, les asigna automáticamente sus rutas reales
-    de Evolution API, Chatwoot, NocoDB y Webhook QR de n8n sin sobrescribir cambios manuales.
-    """
-    texto = f"{user.company_name or ''} {user.full_name or ''} {user.email or ''}".lower()
-    modificado = False
-
-    if "burger" in texto or "burguer" in texto or "jl" in texto:
-        if not user.evolution_instance:
-            user.evolution_instance = "JLBurguer."
-            modificado = True
-        if not user.chatwoot_url:
-            user.chatwoot_url = "https://chat.qxao.dpdns.org/app/accounts/2/dashboard"
-            modificado = True
-        if not user.nocodb_url:
-            user.nocodb_url = "https://crm.qxao.dpdns.org/wgai29by/pi4c3iginxwezws"
-            modificado = True
-        if not user.qr_webhook_url:
-            user.qr_webhook_url = "https://n8n.qxao.dpdns.org/webhook/obtener-qr-jlburger"
-            modificado = True
-
-    elif "engrano" in texto or "yolanda" in texto or "pisa" in texto:
-        if not user.evolution_instance:
-            user.evolution_instance = "pisa62"
-            modificado = True
-        if not user.chatwoot_url:
-            user.chatwoot_url = "https://chat.qxao.dpdns.org/app/accounts/2/dashboard"
-            modificado = True
-        if not user.nocodb_url:
-            user.nocodb_url = "https://crm.qxao.dpdns.org/wgai29by/p96tfdcx3ish0pv"
-            modificado = True
-        if not user.qr_webhook_url:
-            user.qr_webhook_url = "https://n8n.qxao.dpdns.org/webhook/obtener-qr-engranos"
-            modificado = True
-
-    elif "matias" in texto:
-        if not user.evolution_instance or "{{" in str(user.evolution_instance):
-            user.evolution_instance = "matias_ca"
-            modificado = True
-        if not user.chatwoot_url:
-            user.chatwoot_url = DEFAULT_CHATWOOT_URL
-            modificado = True
-        if not user.nocodb_url:
-            user.nocodb_url = DEFAULT_NOCODB_URL
-            modificado = True
-        if not user.qr_webhook_url:
-            user.qr_webhook_url = f"{N8N_BASE_URL}/webhook/obtener-qr-matias_ca"
-            modificado = True
-
-    elif "rikiwey" in texto:
-        if not user.evolution_instance or "{{" in str(user.evolution_instance):
-            user.evolution_instance = "rikiwey"
-            modificado = True
-        if not user.chatwoot_url:
-            user.chatwoot_url = DEFAULT_CHATWOOT_URL
-            modificado = True
-        if not user.nocodb_url:
-            user.nocodb_url = DEFAULT_NOCODB_URL
-            modificado = True
-        if not user.qr_webhook_url:
-            user.qr_webhook_url = f"{N8N_BASE_URL}/webhook/obtener-qr-rikiwey"
-            modificado = True
-
-    else:
-        if not user.evolution_instance or "{{" in str(user.evolution_instance):
-            user.evolution_instance = generar_slug_instancia(user.company_name)
-            modificado = True
-        if not user.qr_webhook_url:
-            user.qr_webhook_url = f"{N8N_BASE_URL}/webhook/obtener-qr-{user.evolution_instance}"
-            modificado = True
-
-    if modificado and db is not None:
-        try:
-            db.commit()
-        except Exception:
-            db.rollback()
-
-
-def llamar_webhook_n8n(url: str, payload: dict, timeout: int = 20, prefer_get: bool = False) -> Optional[dict]:
-    """
-    Soporta tanto Webhooks GET (como obtener-qr-jlburger y obtener-qr-engranos en n8n)
-    como Webhooks POST JSON (como el Gerente General).
+    Llama a un webhook de n8n. Devuelve el JSON de respuesta o None si falla.
+    only_post=True evita el reintento por GET (necesario para acciones que cambian datos).
     """
     if not url or not url.strip():
         return None
     target_url = url.strip()
-    headers = {"Accept": "application/json", "User-Agent": "QxaoBackend/2.0"}
+    headers = {"Accept": "application/json", "User-Agent": "QxaoBackend/3.0"}
     if N8N_WEBHOOK_SECRET:
         headers["X-Qxao-Secret"] = N8N_WEBHOOK_SECRET
 
-    metodos = ["GET", "POST"] if prefer_get else ["POST", "GET"]
+    if only_post:
+        metodos = ["POST"]
+    else:
+        metodos = ["GET", "POST"] if prefer_get else ["POST", "GET"]
 
     for metodo in metodos:
         try:
@@ -184,13 +127,16 @@ def llamar_webhook_n8n(url: str, payload: dict, timeout: int = 20, prefer_get: b
                 except Exception:
                     return {"base64": raw}
         except urllib.error.HTTPError as he:
-            # Si el webhook en n8n está configurado en GET y enviamos POST (o viceversa), probamos el otro método
-            if he.code in (404, 405):
+            if he.code in (404, 405) and len(metodos) > 1:
                 continue
             print(f"HTTPError ({he.code}) en Webhook n8n ({target_url}): {he}")
         except Exception as e:
             print(f"Error al contactar Webhook n8n ({target_url}) con {metodo}: {e}")
     return None
+
+
+def n8n_respondio_ok(resp: Optional[dict]) -> bool:
+    return isinstance(resp, dict) and resp.get("success") is not False and not resp.get("error")
 
 
 def obtener_limite_por_plan(plan: str) -> int:
@@ -233,7 +179,6 @@ def login_cliente(request: Request, credentials: LoginRequest, db: Session = Dep
     if not user.is_active:
         raise HTTPException(status_code=403, detail="Tu cuenta ha sido bloqueada.")
 
-    autocompletar_ecosistema_conocido(user, db)
     access_token = create_access_token(data={"sub": user.email, "tipo": "cliente", "tv": user.token_version})
 
     response = JSONResponse(content={
@@ -288,9 +233,7 @@ def logout_staff(current_staff: StaffModel = Depends(get_current_staff), db: Ses
 # ==================================================
 # PANEL DEL CLIENTE (MULTI-TENANT + IFRAMES + QR)
 # ==================================================
-def serializar_perfil_cliente(client: UserModel, db: Optional[Session] = None) -> dict:
-    autocompletar_ecosistema_conocido(client, db)
-    instancia = client.evolution_instance or generar_slug_instancia(client.company_name)
+def serializar_perfil_cliente(client: UserModel) -> dict:
     return {
         "success": True,
         "id": client.id,
@@ -305,7 +248,7 @@ def serializar_perfil_cliente(client: UserModel, db: Optional[Session] = None) -
         "estado_agente": client.estado_agente or "Activo",
         "webhook_activo": bool(client.webhook_activo),
         "inventario_activo": bool(client.inventario_activo),
-        "evolution_instance": instancia,
+        "evolution_instance": client.evolution_instance or "",
         "chatwoot_url": client.chatwoot_url or DEFAULT_CHATWOOT_URL,
         "nocodb_url": client.nocodb_url or DEFAULT_NOCODB_URL,
         "qr_webhook_url": client.qr_webhook_url or "",
@@ -314,24 +257,21 @@ def serializar_perfil_cliente(client: UserModel, db: Optional[Session] = None) -
 
 
 @router.get("/api/client/dashboard")
-def get_client_dashboard(current_client: UserModel = Depends(get_current_client), db: Session = Depends(get_db)):
-    return serializar_perfil_cliente(current_client, db)
+def get_client_dashboard(current_client: UserModel = Depends(get_current_client)):
+    return serializar_perfil_cliente(current_client)
 
 
 @router.get("/api/me")
-def get_me(current_client: UserModel = Depends(get_current_client), db: Session = Depends(get_db)):
-    return serializar_perfil_cliente(current_client, db)
+def get_me(current_client: UserModel = Depends(get_current_client)):
+    return serializar_perfil_cliente(current_client)
 
 
 @router.post("/api/client/toggle-agent")
 @router.post("/api/toggle-agente")
 def client_toggle_agent(current_client: UserModel = Depends(get_current_client), db: Session = Depends(get_db)):
     current_client.estado_agente = "Pausado" if current_client.estado_agente == "Activo" else "Activo"
-    db.add(ErrorLogModel(
-        user_id=current_client.id,
-        mensaje=f"Estado del Agente IA cambiado a '{current_client.estado_agente}' desde el panel del cliente.",
-        timestamp=datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    ))
+    registrar(db, current_client.id,
+              f"Estado del Agente IA cambiado a '{current_client.estado_agente}' desde el panel del cliente.")
     db.commit()
     return {"success": True, "estado_agente": current_client.estado_agente}
 
@@ -353,21 +293,18 @@ def client_toggle_inventario(current_client: UserModel = Depends(get_current_cli
 
 
 # ==================================================
-# PORTAL QR DINÁMICO (CONECTADO A N8N + EVOLUTION API)
+# PORTAL QR DINÁMICO (UN SOLO WEBHOOK DE n8n PARA TODOS LOS CLIENTES)
 # ==================================================
 @router.post("/api/client/qr")
 @router.get("/api/client/qr")
 def solicitar_qr_whatsapp(current_client: UserModel = Depends(get_current_client), db: Session = Depends(get_db)):
-    """
-    Extrae el código QR Base64 desde el Webhook de n8n correspondiente al cliente
-    (por ejemplo /webhook/obtener-qr-jlburger o /webhook/obtener-qr-engranos).
-    Soporta tanto Webhooks GET como POST.
-    """
-    autocompletar_ecosistema_conocido(current_client, db)
-    instancia = current_client.evolution_instance or generar_slug_instancia(current_client.company_name)
-    if not current_client.evolution_instance:
-        current_client.evolution_instance = instancia
-        db.commit()
+    instancia = (current_client.evolution_instance or "").strip()
+    if not instancia:
+        return {
+            "success": False,
+            "status": "NO_INSTANCE",
+            "detail": "Este cliente aún no tiene instancia de WhatsApp. Pide al administrador que sincronice con n8n."
+        }
 
     webhook_qr = (current_client.qr_webhook_url or N8N_QR_WEBHOOK_URL or "").strip()
     if not webhook_qr:
@@ -375,10 +312,9 @@ def solicitar_qr_whatsapp(current_client: UserModel = Depends(get_current_client
             "success": False,
             "status": "MISSING_WEBHOOK",
             "evolution_instance": instancia,
-            "detail": "Configura el Webhook QR de n8n para este cliente."
+            "detail": "Falta configurar el Webhook QR de n8n."
         }
 
-    # Los workflows actuales en n8n (obtener-qr-jlburger / obtener-qr-engranos) usan método GET
     respuesta_n8n = llamar_webhook_n8n(
         webhook_qr,
         {
@@ -398,7 +334,7 @@ def solicitar_qr_whatsapp(current_client: UserModel = Depends(get_current_client
             "success": False,
             "status": "WEBHOOK_ERROR",
             "evolution_instance": instancia,
-            "detail": "No se recibió respuesta del Webhook QR en n8n. Verifica que el flujo esté Activo (Published)."
+            "detail": "No se recibió respuesta del Webhook QR en n8n. Verifica que el flujo esté publicado."
         }
 
     estado = (
@@ -430,18 +366,42 @@ def solicitar_qr_whatsapp(current_client: UserModel = Depends(get_current_client
 
 
 # ==================================================
-# GESTIÓN DE CLIENTES (PANEL ADMIN + BOTÓN "+ CREAR CLIENTE")
+# PANEL ADMIN: LECTURA
 # ==================================================
+def serializar_cliente_admin(u: UserModel) -> dict:
+    return {
+        "id": u.id,
+        "full_name": u.full_name,
+        "company_name": u.company_name,
+        "email": u.email,
+        "status": "Activo" if u.is_active else "Bloqueado",
+        "is_active": bool(u.is_active),
+        "plan": u.plan,
+        "rol": "Cliente",
+        "mensajes_consumidos": u.mensajes_consumidos or 0,
+        "limite_mensajes": u.limite_mensajes or 1000,
+        "estado_agente": u.estado_agente or "Activo",
+        "webhook_activo": bool(u.webhook_activo),
+        "inventario_activo": bool(u.inventario_activo),
+        "evolution_instance": u.evolution_instance or "",
+        "chatwoot_url": u.chatwoot_url or "",
+        "nocodb_url": u.nocodb_url or "",
+        "qr_webhook_url": u.qr_webhook_url or "",
+        "whatsapp_conectado": bool(u.whatsapp_conectado),
+        "provision_status": u.provision_status or "pendiente",
+        "provision_error": u.provision_error or ""
+    }
+
+
 @router.get("/api/admin/stats")
 def get_admin_stats(db: Session = Depends(get_db), staff: StaffModel = Depends(get_ventas_user)):
     total_active = db.query(func.count(UserModel.id)).filter(UserModel.is_active.is_(True)).scalar() or 0
-    total_users = db.query(func.count(UserModel.id)).scalar() or 0
     total_mensajes = db.query(func.coalesce(func.sum(UserModel.mensajes_consumidos), 0)).scalar() or 0
-    success_rate = 94.5 if total_users else 0.0
+    paused = db.query(func.count(UserModel.id)).filter(UserModel.estado_agente != "Activo").scalar() or 0
     return {
         "total_active_clients": total_active,
         "conversations_today": total_mensajes,
-        "success_rate": success_rate
+        "paused_agents": paused
     }
 
 
@@ -453,38 +413,18 @@ def get_all_users(
     staff: StaffModel = Depends(get_ventas_user)
 ):
     users_db = db.query(UserModel).order_by(UserModel.id.desc()).offset(skip).limit(limit).all()
-    resultado = []
-    for u in users_db:
-        autocompletar_ecosistema_conocido(u, db)
-        resultado.append({
-            "id": u.id,
-            "full_name": u.full_name,
-            "company_name": u.company_name,
-            "email": u.email,
-            "status": "Activo" if u.is_active else "Bloqueado",
-            "is_active": u.is_active,
-            "plan": u.plan,
-            "rol": "Cliente",
-            "mensajes_consumidos": u.mensajes_consumidos or 0,
-            "limite_mensajes": u.limite_mensajes or 1000,
-            "estado_agente": u.estado_agente or "Activo",
-            "webhook_activo": bool(u.webhook_activo),
-            "inventario_activo": bool(u.inventario_activo),
-            "evolution_instance": u.evolution_instance or generar_slug_instancia(u.company_name),
-            "chatwoot_url": u.chatwoot_url or DEFAULT_CHATWOOT_URL,
-            "nocodb_url": u.nocodb_url or DEFAULT_NOCODB_URL,
-            "qr_webhook_url": u.qr_webhook_url or "",
-            "whatsapp_conectado": bool(u.whatsapp_conectado)
-        })
-    return resultado
+    return [serializar_cliente_admin(u) for u in users_db]
 
 
 @router.get("/api/admin/users/{user_id}/errors")
 def get_user_errors(user_id: int, db: Session = Depends(get_db), staff: StaffModel = Depends(get_ventas_user)):
-    logs = db.query(ErrorLogModel).filter(ErrorLogModel.user_id == user_id).order_by(ErrorLogModel.id.desc()).limit(20).all()
+    logs = db.query(ErrorLogModel).filter(ErrorLogModel.user_id == user_id).order_by(ErrorLogModel.id.desc()).limit(50).all()
     return [{"id": l.id, "mensaje": l.mensaje, "timestamp": l.timestamp} for l in logs]
 
 
+# ==================================================
+# PANEL ADMIN: ALTA DE CLIENTE + APROVISIONAMIENTO (TODO VÍA n8n)
+# ==================================================
 class CreateUserRequest(BaseModel):
     full_name: constr(max_length=150)
     company_name: constr(max_length=150)
@@ -498,140 +438,11 @@ class CreateUserRequest(BaseModel):
     auto_provision_n8n: Optional[bool] = True
 
 
-def crear_instancia_evolution_directa(instancia: str) -> dict:
-    if not EVOLUTION_BASE_URL or not EVOLUTION_API_KEY:
-        return {"created": False, "reason": "Sin credenciales Evolution API"}
-    url = f"{EVOLUTION_BASE_URL}/instance/create"
-    payload = {
-        "instanceName": instancia,
-        "qrcode": True,
-        "integration": "WHATSAPP-BAILEYS"
-    }
-    req = urllib.request.Request(
-        url,
-        data=json.dumps(payload).encode("utf-8"),
-        headers={
-            "Content-Type": "application/json",
-            "apikey": EVOLUTION_API_KEY,
-            "User-Agent": "QxaoBackend/2.0"
-        },
-        method="POST"
-    )
-    try:
-        with urllib.request.urlopen(req, timeout=15) as resp:
-            return {"created": True, "data": json.loads(resp.read().decode("utf-8"))}
-    except urllib.error.HTTPError as he:
-        return {"created": False, "http_code": he.code}
-    except Exception as e:
-        return {"created": False, "error": str(e)}
-
-
-def crear_workflow_cliente_n8n_directo(user: UserModel, instancia: str) -> Optional[dict]:
-    """
-    Crea directamente el Workflow del cliente en n8n vía API REST (POST /api/v1/workflows)
-    si aún no existe en la lista de Workflows, evitando depender de importar JSON manualmente.
-    """
-    if not N8N_BASE_URL or not N8N_API_KEY:
-        return None
-    headers = {
-        "Content-Type": "application/json",
-        "Accept": "application/json",
-        "X-N8N-API-KEY": N8N_API_KEY,
-        "User-Agent": "QxaoBackend/2.0"
-    }
-    target_name = f"[{user.company_name}] Agente IA Qxao ({user.plan})"
-    try:
-        list_req = urllib.request.Request(f"{N8N_BASE_URL}/api/v1/workflows?limit=100", headers=headers, method="GET")
-        with urllib.request.urlopen(list_req, timeout=15) as resp:
-            wf_list = json.loads(resp.read().decode("utf-8")).get("data", [])
-            for wf in wf_list:
-                if wf.get("name", "").strip().lower() == target_name.strip().lower() or f"[{user.company_name.lower()}]" in wf.get("name", "").lower():
-                    return {"id": wf.get("id"), "name": wf.get("name"), "already_existed": True}
-    except Exception as e:
-        print(f"Aviso listando workflows en n8n: {e}")
-
-    wf_payload = {
-        "name": target_name,
-        "nodes": [
-            {
-                "parameters": {
-                    "httpMethod": "POST",
-                    "path": f"agente-{instancia}",
-                    "options": {}
-                },
-                "name": f"Webhook Evolution ({instancia})",
-                "type": "n8n-nodes-base.webhook",
-                "typeVersion": 2,
-                "position": [260, 300]
-            },
-            {
-                "parameters": {
-                    "httpMethod": "GET",
-                    "path": f"obtener-qr-{instancia}",
-                    "responseMode": "lastNode",
-                    "options": {}
-                },
-                "name": f"Webhook QR ({instancia})",
-                "type": "n8n-nodes-base.webhook",
-                "typeVersion": 2,
-                "position": [260, 520]
-            },
-            {
-                "parameters": {
-                    "method": "GET",
-                    "url": f"{EVOLUTION_BASE_URL}/instance/connect/{instancia}",
-                    "sendHeaders": True,
-                    "headerParameters": {
-                        "parameters": [
-                            {"name": "apikey", "value": EVOLUTION_API_KEY}
-                        ]
-                    },
-                    "options": {}
-                },
-                "name": "Obtener QR Evolution API",
-                "type": "n8n-nodes-base.httpRequest",
-                "typeVersion": 4.2,
-                "position": [520, 520]
-            }
-        ],
-        "connections": {
-            f"Webhook QR ({instancia})": {
-                "main": [[{"node": "Obtener QR Evolution API", "type": "main", "index": 0}]]
-            }
-        },
-        "settings": {"executionOrder": "v1"}
-    }
-    try:
-        create_req = urllib.request.Request(
-            f"{N8N_BASE_URL}/api/v1/workflows",
-            data=json.dumps(wf_payload).encode("utf-8"),
-            headers=headers,
-            method="POST"
-        )
-        with urllib.request.urlopen(create_req, timeout=20) as resp:
-            created_wf = json.loads(resp.read().decode("utf-8"))
-            wf_id = created_wf.get("id")
-            if wf_id:
-                try:
-                    act_req = urllib.request.Request(
-                        f"{N8N_BASE_URL}/api/v1/workflows/{wf_id}/activate",
-                        data=b"{}",
-                        headers=headers,
-                        method="POST"
-                    )
-                    urllib.request.urlopen(act_req, timeout=10).read()
-                except Exception:
-                    pass
-            return created_wf
-    except Exception as e:
-        print(f"Error creando workflow en n8n vía API: {e}")
-        return None
-
-
 def aprovisionar_cliente_en_n8n(user: UserModel, db: Session) -> dict:
+    """Una sola llamada a n8n. n8n crea Evolution + Chatwoot + NocoDB y responde con las URLs."""
     instancia = (user.evolution_instance or "").strip()
     if not instancia or "{{" in instancia:
-        instancia = generar_slug_instancia(user.company_name)
+        instancia = instancia_unica(db, generar_slug_instancia(user.company_name), user.id)
         user.evolution_instance = instancia
         db.commit()
 
@@ -646,11 +457,10 @@ def aprovisionar_cliente_en_n8n(user: UserModel, db: Session) -> dict:
         "evolution_instance": instancia
     }
 
-    resp = llamar_webhook_n8n(N8N_CREATE_CLIENT_WEBHOOK_URL, payload, timeout=20, prefer_get=False) if N8N_CREATE_CLIENT_WEBHOOK_URL else None
-    evo_direct = crear_instancia_evolution_directa(instancia)
-    wf_direct = crear_workflow_cliente_n8n_directo(user, instancia)
+    resp = llamar_webhook_n8n(N8N_CREATE_CLIENT_WEBHOOK_URL, payload, timeout=60, only_post=True)
+    ok = n8n_respondio_ok(resp)
 
-    if resp and isinstance(resp, dict):
+    if ok:
         if resp.get("evolution_instance") and "{{" not in str(resp.get("evolution_instance")):
             user.evolution_instance = resp["evolution_instance"]
         if resp.get("chatwoot_url"):
@@ -659,28 +469,19 @@ def aprovisionar_cliente_en_n8n(user: UserModel, db: Session) -> dict:
             user.nocodb_url = resp["nocodb_url"]
         if resp.get("qr_webhook_url"):
             user.qr_webhook_url = resp["qr_webhook_url"]
+        user.provision_status = "activo"
+        user.provision_error = None
+        registrar(db, user.id, f"Ecosistema aprovisionado por n8n (instancia: {user.evolution_instance}).")
+    else:
+        detalle = "n8n no respondió. Verifica que el flujo esté publicado."
+        if isinstance(resp, dict):
+            detalle = str(resp.get("error") or resp.get("message") or detalle)[:500]
+        user.provision_status = "error"
+        user.provision_error = detalle
+        registrar(db, user.id, f"Fallo al aprovisionar en n8n: {detalle}")
 
-    if not user.qr_webhook_url:
-        user.qr_webhook_url = f"{N8N_BASE_URL}/webhook/obtener-qr-{user.evolution_instance}"
-    if not user.chatwoot_url:
-        user.chatwoot_url = DEFAULT_CHATWOOT_URL
-    if not user.nocodb_url:
-        user.nocodb_url = DEFAULT_NOCODB_URL
-
-    provisioned_ok = bool(resp or evo_direct.get("created") or wf_direct)
-    wf_info = f", Workflow n8n: {wf_direct.get('id')}" if isinstance(wf_direct, dict) and wf_direct.get("id") else ""
-    db.add(ErrorLogModel(
-        user_id=user.id,
-        mensaje=f"Ecosistema aprovisionado (Instancia: {user.evolution_instance}{wf_info}).",
-        timestamp=datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
-    ))
     db.commit()
-    return {
-        "provisioned": provisioned_ok,
-        "n8n_response": resp,
-        "evolution_direct": evo_direct,
-        "n8n_workflow": wf_direct
-    }
+    return {"provisioned": ok, "n8n_response": resp}
 
 
 @router.post("/api/admin/users")
@@ -690,7 +491,8 @@ def create_new_user(request: CreateUserRequest, db: Session = Depends(get_db), m
         return {"success": False, "detail": "Este correo ya está registrado."}
 
     limite = obtener_limite_por_plan(request.plan)
-    instancia = (request.evolution_instance or "").strip() or generar_slug_instancia(request.company_name)
+    base_instancia = (request.evolution_instance or "").strip() or generar_slug_instancia(request.company_name)
+    instancia = instancia_unica(db, base_instancia)
 
     new_user = UserModel(
         full_name=request.full_name,
@@ -700,20 +502,15 @@ def create_new_user(request: CreateUserRequest, db: Session = Depends(get_db), m
         plan=request.plan,
         limite_mensajes=limite,
         evolution_instance=instancia,
-        chatwoot_url=(request.chatwoot_url or "").strip() or DEFAULT_CHATWOOT_URL,
-        nocodb_url=(request.nocodb_url or "").strip() or DEFAULT_NOCODB_URL,
-        qr_webhook_url=(request.qr_webhook_url or "").strip() or None
+        chatwoot_url=(request.chatwoot_url or "").strip() or None,
+        nocodb_url=(request.nocodb_url or "").strip() or None,
+        qr_webhook_url=(request.qr_webhook_url or "").strip() or None,
+        provision_status="pendiente"
     )
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
-    autocompletar_ecosistema_conocido(new_user, db)
-
-    db.add(ErrorLogModel(
-        user_id=new_user.id,
-        mensaje=f"Cuenta de cliente inicializada (Instancia Evolution: {new_user.evolution_instance}).",
-        timestamp=datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
-    ))
+    registrar(db, new_user.id, f"Cuenta de cliente creada por {master.email} (instancia: {new_user.evolution_instance}).")
     db.commit()
 
     resultado_n8n = {"provisioned": False}
@@ -722,12 +519,14 @@ def create_new_user(request: CreateUserRequest, db: Session = Depends(get_db), m
 
     return {
         "success": True,
-        "message": "Cliente creado",
+        "message": "Cliente creado" if resultado_n8n.get("provisioned") or not request.auto_provision_n8n
+        else "Cliente creado, pero n8n no pudo aprovisionarlo. Usa 'Sync n8n' para reintentar.",
         "user_id": new_user.id,
+        "provision_status": new_user.provision_status,
+        "provision_error": new_user.provision_error,
         "evolution_instance": new_user.evolution_instance,
         "chatwoot_url": new_user.chatwoot_url,
         "nocodb_url": new_user.nocodb_url,
-        "qr_webhook_url": new_user.qr_webhook_url,
         "n8n_provisioning": resultado_n8n
     }
 
@@ -750,6 +549,10 @@ def update_user(user_id: int, request: UpdateUserRequest, db: Session = Depends(
     if not user:
         return {"success": False, "detail": "Cliente no encontrado"}
 
+    duplicado = db.query(UserModel).filter(UserModel.email == request.email, UserModel.id != user_id).first()
+    if duplicado:
+        return {"success": False, "detail": "Ese correo ya pertenece a otro cliente."}
+
     user.full_name = request.full_name
     user.company_name = request.company_name
     user.email = request.email
@@ -757,7 +560,8 @@ def update_user(user_id: int, request: UpdateUserRequest, db: Session = Depends(
     user.limite_mensajes = obtener_limite_por_plan(request.plan)
 
     if request.evolution_instance is not None:
-        user.evolution_instance = request.evolution_instance.strip() or generar_slug_instancia(request.company_name)
+        base = request.evolution_instance.strip() or generar_slug_instancia(request.company_name)
+        user.evolution_instance = instancia_unica(db, base, user.id)
     if request.chatwoot_url is not None:
         user.chatwoot_url = request.chatwoot_url.strip() or None
     if request.nocodb_url is not None:
@@ -769,6 +573,7 @@ def update_user(user_id: int, request: UpdateUserRequest, db: Session = Depends(
         user.hashed_password = hash_password(request.password)
         user.token_version += 1
 
+    registrar(db, user.id, f"Datos del cliente editados por {master.email}.")
     db.commit()
     return {"success": True, "message": "Cliente actualizado"}
 
@@ -779,9 +584,17 @@ def reprovision_user_n8n(user_id: int, db: Session = Depends(get_db), master: St
     if not user:
         raise HTTPException(status_code=404, detail="Cliente no encontrado")
     resultado = aprovisionar_cliente_en_n8n(user, db)
-    return {"success": True, "n8n_provisioning": resultado}
+    return {
+        "success": bool(resultado.get("provisioned")),
+        "provision_status": user.provision_status,
+        "detail": user.provision_error or "",
+        "n8n_provisioning": resultado
+    }
 
 
+# ==================================================
+# PANEL ADMIN: ACCIONES MASTER
+# ==================================================
 @router.put("/api/admin/users/{user_id}/toggle-block")
 def toggle_block_user(user_id: int, db: Session = Depends(get_db), master: StaffModel = Depends(get_master_user)):
     user = db.query(UserModel).filter(UserModel.id == user_id).first()
@@ -790,8 +603,8 @@ def toggle_block_user(user_id: int, db: Session = Depends(get_db), master: Staff
 
     user.is_active = not user.is_active
     if not user.is_active:
-        user.token_version += 1
-
+        user.token_version += 1  # cierra sus sesiones abiertas
+    registrar(db, user.id, f"Acceso {'reactivado' if user.is_active else 'bloqueado'} por {master.email}.")
     db.commit()
     return {"success": True, "is_active": user.is_active}
 
@@ -804,13 +617,72 @@ def toggle_agent_status(user_id: int, db: Session = Depends(get_db), master: Sta
 
     if user.estado_agente == "Activo":
         user.estado_agente = "Pausado"
-        db.add(ErrorLogModel(user_id=user.id, mensaje="Agente IA pausado manualmente por Master", timestamp=datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+        registrar(db, user.id, f"Agente IA pausado por {master.email}.")
     else:
         user.estado_agente = "Activo"
-        db.add(ErrorLogModel(user_id=user.id, mensaje="Agente IA reanudado por Master", timestamp=datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+        registrar(db, user.id, f"Agente IA reanudado por {master.email}.")
 
     db.commit()
     return {"success": True, "estado_agente": user.estado_agente}
+
+
+@router.post("/api/admin/users/{user_id}/reset-usage")
+def reset_usage(user_id: int, db: Session = Depends(get_db), master: StaffModel = Depends(get_master_user)):
+    user = db.query(UserModel).filter(UserModel.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Cliente no encontrado")
+
+    habia_llegado_al_limite = (user.mensajes_consumidos or 0) >= (user.limite_mensajes or 1000)
+    user.mensajes_consumidos = 0
+    reactivado = False
+    if habia_llegado_al_limite and user.estado_agente != "Activo":
+        user.estado_agente = "Activo"
+        reactivado = True
+    registrar(db, user.id,
+              f"Consumo de mensajes reiniciado a 0 por {master.email}" + (" (agente reactivado)." if reactivado else "."))
+    db.commit()
+    return {"success": True, "mensajes_consumidos": 0, "estado_agente": user.estado_agente}
+
+
+@router.delete("/api/admin/users/{user_id}")
+def delete_user(
+    user_id: int,
+    force: bool = Query(False),
+    db: Session = Depends(get_db),
+    master: StaffModel = Depends(get_master_user)
+):
+    """
+    Elimina al cliente. Primero pide a n8n que limpie su ecosistema (instancia de WhatsApp,
+    cuenta de Chatwoot y datos en NocoDB). Si n8n no confirma, no borra nada salvo que se use force=true.
+    """
+    user = db.query(UserModel).filter(UserModel.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Cliente no encontrado")
+
+    payload = {
+        "event": "client.deleted",
+        "client_id": user.id,
+        "company_name": user.company_name,
+        "email": user.email,
+        "evolution_instance": user.evolution_instance
+    }
+    resp = llamar_webhook_n8n(N8N_DELETE_CLIENT_WEBHOOK_URL, payload, timeout=60, only_post=True)
+    n8n_ok = n8n_respondio_ok(resp)
+
+    if not n8n_ok and not force:
+        detalle = "n8n no confirmó la limpieza del ecosistema (WhatsApp, Chatwoot, NocoDB)."
+        if isinstance(resp, dict) and (resp.get("error") or resp.get("message")):
+            detalle = str(resp.get("error") or resp.get("message"))[:300]
+        return JSONResponse(
+            status_code=409,
+            content={"success": False, "needs_force": True, "detail": detalle}
+        )
+
+    print(f"[ADMIN] {master.email} eliminó al cliente {user.email} (id={user.id}, n8n_ok={n8n_ok}, force={force})")
+    db.query(ErrorLogModel).filter(ErrorLogModel.user_id == user.id).delete()
+    db.delete(user)
+    db.commit()
+    return {"success": True, "message": "Cliente eliminado", "n8n_cleanup": n8n_ok}
 
 
 # ==================================================
@@ -824,10 +696,15 @@ class N8nProvisionCallback(BaseModel):
     nocodb_url: Optional[str] = None
     qr_webhook_url: Optional[str] = None
     whatsapp_conectado: Optional[bool] = None
+    provision_status: Optional[str] = None
+    provision_error: Optional[str] = None
 
 
 def verificar_secreto_n8n(x_qxao_secret: Optional[str]):
-    if N8N_WEBHOOK_SECRET and x_qxao_secret != N8N_WEBHOOK_SECRET:
+    """Falla cerrado: sin secreto configurado en el servidor, los webhooks entrantes se rechazan."""
+    if not N8N_WEBHOOK_SECRET:
+        raise HTTPException(status_code=503, detail="N8N_WEBHOOK_SECRET no está configurado en el servidor.")
+    if not x_qxao_secret or not hmac.compare_digest(x_qxao_secret, N8N_WEBHOOK_SECRET):
         raise HTTPException(status_code=401, detail="Clave de Webhook n8n inválida.")
 
 
@@ -860,12 +737,11 @@ def n8n_provision_callback(
         user.qr_webhook_url = payload.qr_webhook_url
     if payload.whatsapp_conectado is not None:
         user.whatsapp_conectado = payload.whatsapp_conectado
+    if payload.provision_status in ("pendiente", "activo", "error"):
+        user.provision_status = payload.provision_status
+        user.provision_error = (payload.provision_error or None) if payload.provision_status == "error" else None
 
-    db.add(ErrorLogModel(
-        user_id=user.id,
-        mensaje="URLs de Chatwoot/NocoDB/Evolution actualizadas automáticamente por n8n.",
-        timestamp=datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    ))
+    registrar(db, user.id, "Datos del ecosistema actualizados automáticamente por n8n.")
     db.commit()
     return {"success": True, "user_id": user.id, "evolution_instance": user.evolution_instance}
 
@@ -904,11 +780,7 @@ def n8n_check_and_consume(
         return {"allowed": False, "reason": "AGENT_PAUSED", "estado_agente": user.estado_agente}
     if (user.mensajes_consumidos or 0) >= (user.limite_mensajes or 1000):
         user.estado_agente = "Pausado"
-        db.add(ErrorLogModel(
-            user_id=user.id,
-            mensaje="Límite de mensajes alcanzado. Agente IA pausado automáticamente.",
-            timestamp=datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        ))
+        registrar(db, user.id, "Límite de mensajes alcanzado. Agente IA pausado automáticamente.")
         db.commit()
         return {"allowed": False, "reason": "LIMIT_REACHED", "estado_agente": user.estado_agente}
 
@@ -942,12 +814,8 @@ def impersonate_client(request: ImpersonateRequest, db: Session = Depends(get_db
         data={"sub": client.email, "tipo": "cliente", "tv": client.token_version}
     )
 
-    audit_log = ErrorLogModel(
-        user_id=client.id,
-        mensaje=f"AUDITORÍA: El administrador [{current_staff.email}] inició sesión en esta cuenta usando el Modo Impersonación.",
-        timestamp=datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    )
-    db.add(audit_log)
+    registrar(db, client.id,
+              f"AUDITORÍA: El administrador [{current_staff.email}] inició sesión en esta cuenta usando el Modo Impersonación.")
     db.commit()
 
     response = JSONResponse(content={"success": True, "message": f"Acceso concedido a {client.full_name}"})

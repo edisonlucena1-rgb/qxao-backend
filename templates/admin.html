@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Qxao Master — Panel de Administración y Aprovisionamiento n8n</title>
+    <title>Qxao Master — Panel de Administración</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -14,11 +14,7 @@
             theme: {
                 extend: {
                     fontFamily: { sans: ['Inter', 'sans-serif'] },
-                    colors: {
-                        primary: '#690991',
-                        darkBg: '#0b0f19',
-                        darkCard: '#131b2e'
-                    }
+                    colors: { primary: '#690991', darkBg: '#0b0f19', darkCard: '#131b2e' }
                 }
             }
         };
@@ -32,6 +28,8 @@
                 linear-gradient(to bottom, rgba(105, 9, 145, 0.14) 1px, transparent 1px);
             background-size: 28px 28px;
         }
+        .act { padding: 6px 10px; border-radius: 8px; font-weight: 600; font-size: 11px; transition: .15s; white-space: nowrap; }
+        .act:disabled { opacity: .5; cursor: wait; }
     </style>
 </head>
 <body class="qxao-grid-bg text-slate-100 min-h-screen flex flex-col">
@@ -40,9 +38,7 @@
     <header class="bg-slate-950/85 backdrop-blur-md border-b border-slate-800 sticky top-0 z-40">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex flex-wrap items-center justify-between gap-4">
             <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-[#690991] to-purple-500 flex items-center justify-center font-extrabold text-lg text-white shadow-lg shadow-[#690991]/40">
-                    Q
-                </div>
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-[#690991] to-purple-500 flex items-center justify-center font-extrabold text-lg text-white shadow-lg shadow-[#690991]/40">Q</div>
                 <div>
                     <h1 class="font-extrabold text-lg text-white tracking-tight">QXAO MASTER BÚNKER</h1>
                     <p class="text-xs text-slate-400">Orquestación Multi-Tenant (Evolution API • Chatwoot • NocoDB • n8n)</p>
@@ -50,12 +46,9 @@
             </div>
 
             <div class="flex items-center gap-3">
-                <button type="button" id="btn-open-create" class="px-4 py-2.5 rounded-xl bg-[#690991] hover:bg-[#4a0066] text-white font-bold text-xs sm:text-sm shadow-lg shadow-[#690991]/40 transition flex items-center gap-2">
-                    <span>+ Crear Cliente</span>
-                </button>
-                <button type="button" id="btn-admin-logout" class="px-3.5 py-2.5 rounded-xl bg-slate-900 hover:bg-red-950/60 text-slate-300 hover:text-red-300 border border-slate-800 text-xs font-semibold transition">
-                    Salir
-                </button>
+                <button type="button" id="btn-open-create" class="px-4 py-2.5 rounded-xl bg-[#690991] hover:bg-[#4a0066] text-white font-bold text-xs sm:text-sm shadow-lg shadow-[#690991]/40 transition">+ Crear Cliente</button>
+                <button type="button" id="btn-open-password" class="px-3.5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 text-xs font-semibold transition">Mi contraseña</button>
+                <button type="button" id="btn-admin-logout" class="px-3.5 py-2.5 rounded-xl bg-slate-900 hover:bg-red-950/60 text-slate-300 hover:text-red-300 border border-slate-800 text-xs font-semibold transition">Salir</button>
             </div>
         </div>
     </header>
@@ -73,17 +66,17 @@
                 <p id="kpi-messages" class="text-3xl font-extrabold text-purple-300 mt-2">0</p>
             </div>
             <div class="bg-darkCard/90 border border-slate-800 rounded-3xl p-5">
-                <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Tasa Operativa IA</span>
-                <p id="kpi-rate" class="text-3xl font-extrabold text-emerald-400 mt-2">94.5%</p>
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Agentes Pausados</span>
+                <p id="kpi-paused" class="text-3xl font-extrabold text-amber-400 mt-2">0</p>
             </div>
         </div>
 
-        <!-- TABLA DE CLIENTES MULTI-TENANT -->
+        <!-- TABLA DE CLIENTES -->
         <div class="bg-darkCard/90 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl">
             <div class="px-6 py-4 border-b border-slate-800 flex flex-wrap items-center justify-between gap-3">
                 <div>
                     <h2 class="text-base font-bold text-white">Clientes y Ecosistemas Conectados</h2>
-                    <p class="text-xs text-slate-400">Gestiona instancias de WhatsApp, URLs de Iframes (Chatwoot/NocoDB) y consumo por negocio.</p>
+                    <p class="text-xs text-slate-400">Cada cliente nuevo se aprovisiona automáticamente en n8n (WhatsApp, Chatwoot y NocoDB).</p>
                 </div>
                 <input type="text" id="search-input" placeholder="Buscar por empresa o correo..." class="px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white focus:outline-none focus:ring-2 focus:ring-[#690991]">
             </div>
@@ -94,47 +87,42 @@
                         <tr class="border-b border-slate-800 text-[11px] font-bold uppercase text-slate-400 bg-slate-900/60">
                             <th class="py-3.5 px-4">Empresa / Cliente</th>
                             <th class="py-3.5 px-4">Instancia Evolution</th>
-                            <th class="py-3.5 px-4">Iframes (Chatwoot / NocoDB)</th>
+                            <th class="py-3.5 px-4">Ecosistema</th>
                             <th class="py-3.5 px-4">Plan y Consumo</th>
-                            <th class="py-3.5 px-4">Agente IA</th>
+                            <th class="py-3.5 px-4">Estado</th>
                             <th class="py-3.5 px-4 text-right">Acciones Master</th>
                         </tr>
                     </thead>
-                    <tbody id="users-table-body" class="divide-y divide-slate-800/70 text-xs">
-                    </tbody>
+                    <tbody id="users-table-body" class="divide-y divide-slate-800/70 text-xs"></tbody>
                 </table>
+                <p id="empty-state" class="hidden text-center text-slate-400 text-xs py-10">Aún no hay clientes. Usa «+ Crear Cliente» para dar de alta el primero.</p>
             </div>
         </div>
     </main>
 
-    <!-- MODAL: + CREAR / EDITAR CLIENTE (CONECTADO A N8N GERENTE GENERAL) -->
+    <!-- MODAL: CREAR / EDITAR -->
     <div id="user-modal" class="hidden fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
         <div class="bg-darkCard w-full max-w-lg p-6 sm:p-8 rounded-3xl shadow-2xl border border-purple-500/30 relative my-8">
-            <button type="button" id="btn-close-modal" class="absolute top-4 right-4 text-slate-400 hover:text-white p-1">
-                ✕
-            </button>
-
-            <h2 id="modal-title" class="text-xl font-extrabold text-white mb-1">Nuevo Cliente Multi-Tenant</h2>
-            <p class="text-xs text-slate-400 mb-5">Al guardar, Qxao registra al cliente y dispara el Webhook a n8n para crear su ecosistema.</p>
+            <button type="button" data-close="user-modal" class="absolute top-4 right-4 text-slate-400 hover:text-white p-1">✕</button>
+            <h2 id="modal-title" class="text-xl font-extrabold text-white mb-1">Nuevo Cliente</h2>
+            <p class="text-xs text-slate-400 mb-5">Al guardar, Qxao registra al cliente y n8n crea su ecosistema completo.</p>
 
             <form id="user-form" class="space-y-3.5">
                 <input type="hidden" id="edit-user-id">
-
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                         <label class="block text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-1">Nombre del Responsable</label>
-                        <input type="text" id="m-name" required placeholder="Ej. José Luis" class="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:ring-2 focus:ring-[#690991]">
+                        <input type="text" id="m-name" required maxlength="150" class="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:ring-2 focus:ring-[#690991]">
                     </div>
                     <div>
                         <label class="block text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-1">Empresa / Marca</label>
-                        <input type="text" id="m-company" required placeholder="Ej. JL Burger" class="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:ring-2 focus:ring-[#690991]">
+                        <input type="text" id="m-company" required maxlength="150" class="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:ring-2 focus:ring-[#690991]">
                     </div>
                 </div>
-
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                         <label class="block text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-1">Correo de Acceso</label>
-                        <input type="email" id="m-email" required placeholder="cliente@empresa.com" class="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:ring-2 focus:ring-[#690991]">
+                        <input type="email" id="m-email" required maxlength="150" class="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:ring-2 focus:ring-[#690991]">
                     </div>
                     <div>
                         <label class="block text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-1">Plan Asignado</label>
@@ -147,82 +135,88 @@
                         </select>
                     </div>
                 </div>
-
                 <div>
                     <label id="m-password-label" class="block text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-1">Contraseña</label>
-                    <input type="password" id="m-password" placeholder="Contraseña de acceso al portal" class="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:ring-2 focus:ring-[#690991]">
+                    <input type="password" id="m-password" maxlength="100" autocomplete="new-password" class="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:ring-2 focus:ring-[#690991]">
                 </div>
 
-                <!-- CONFIGURACIÓN MULTI-TENANT (EVOLUTION + CHATWOOT + NOCODB) -->
                 <div class="pt-2 border-t border-slate-800 space-y-3">
-                    <span class="block text-[11px] font-bold text-purple-300 uppercase tracking-wider">Parámetros del Ecosistema (n8n / Iframes)</span>
-
+                    <span class="block text-[11px] font-bold text-purple-300 uppercase tracking-wider">Ecosistema (se completa solo con n8n)</span>
                     <div>
-                        <label class="block text-[11px] text-slate-400 mb-1">Nombre de Instancia en Evolution API (se autogenera si lo dejas vacío)</label>
+                        <label class="block text-[11px] text-slate-400 mb-1">Nombre de instancia en Evolution API (se autogenera si lo dejas vacío)</label>
                         <input type="text" id="m-instance" placeholder="Ej. jl_burger" class="w-full px-3.5 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs font-mono text-purple-200 focus:outline-none focus:ring-2 focus:ring-[#690991]">
                     </div>
-
-                    <div>
-                        <label class="block text-[11px] text-slate-400 mb-1">URL Bandeja Chatwoot (Iframe)</label>
-                        <input type="url" id="m-chatwoot" placeholder="https://chat.tudominio.com/app/accounts/1/inbox/..." class="w-full px-3.5 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs font-mono text-slate-200 focus:outline-none focus:ring-2 focus:ring-[#690991]">
+                    <div id="urls-row" class="hidden space-y-3">
+                        <div>
+                            <label class="block text-[11px] text-slate-400 mb-1">URL Chatwoot (iframe)</label>
+                            <input type="url" id="m-chatwoot" class="w-full px-3.5 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs font-mono text-slate-200 focus:outline-none focus:ring-2 focus:ring-[#690991]">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] text-slate-400 mb-1">URL NocoDB (iframe)</label>
+                            <input type="url" id="m-nocodb" class="w-full px-3.5 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs font-mono text-slate-200 focus:outline-none focus:ring-2 focus:ring-[#690991]">
+                        </div>
                     </div>
-
-                    <div>
-                        <label class="block text-[11px] text-slate-400 mb-1">URL Tabla Inventario NocoDB (Iframe)</label>
-                        <input type="url" id="m-nocodb" placeholder="https://db.tudominio.com/dashboard/#/nc/view/..." class="w-full px-3.5 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs font-mono text-slate-200 focus:outline-none focus:ring-2 focus:ring-[#690991]">
-                    </div>
-
                     <label id="auto-provision-row" class="flex items-center gap-2.5 pt-1 cursor-pointer">
                         <input type="checkbox" id="m-auto-n8n" checked class="w-4 h-4 rounded accent-[#690991]">
-                        <span class="text-xs text-slate-300">Disparar Webhook a <strong>n8n ("Gerente General")</strong> para crear instancia, bandeja y tabla automáticamente</span>
+                        <span class="text-xs text-slate-300">Aprovisionar ahora en <strong>n8n</strong> (instancia, bandeja y tabla)</span>
                     </label>
                 </div>
 
                 <p id="modal-error" class="hidden text-red-400 text-xs font-semibold text-center"></p>
+                <button type="submit" id="btn-save" class="w-full bg-[#690991] hover:bg-[#4a0066] disabled:opacity-60 text-white py-3 rounded-xl font-bold text-xs sm:text-sm shadow-lg shadow-[#690991]/30 transition">Guardar</button>
+            </form>
+        </div>
+    </div>
 
-                <button type="submit" id="btn-save" class="w-full bg-[#690991] hover:bg-[#4a0066] text-white py-3 rounded-xl font-bold text-xs sm:text-sm shadow-lg shadow-[#690991]/30 transition">
-                    Guardar y Aprovisionar Cliente
-                </button>
+    <!-- MODAL: ELIMINAR -->
+    <div id="delete-modal" class="hidden fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-darkCard w-full max-w-md p-6 rounded-3xl shadow-2xl border border-red-500/40 relative">
+            <button type="button" data-close="delete-modal" class="absolute top-4 right-4 text-slate-400 hover:text-white p-1">✕</button>
+            <h2 class="text-lg font-extrabold text-red-300 mb-1">Eliminar cliente</h2>
+            <p class="text-xs text-slate-300 mb-3">Se borrará <strong id="del-company" class="text-white"></strong> junto con su instancia de WhatsApp, su cuenta de Chatwoot y sus datos en NocoDB. <strong>No se puede deshacer.</strong></p>
+            <label class="block text-[11px] text-slate-400 mb-1">Escribe el correo <span id="del-email" class="font-mono text-slate-200"></span> para confirmar</label>
+            <input type="text" id="del-confirm" autocomplete="off" class="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:ring-2 focus:ring-red-500">
+            <p id="del-error" class="hidden text-amber-300 text-xs font-semibold mt-3"></p>
+            <div class="flex flex-wrap gap-2 mt-4">
+                <button type="button" id="btn-del-confirm" disabled class="flex-1 px-4 py-2.5 rounded-xl bg-red-700 hover:bg-red-600 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-xs transition">Eliminar definitivamente</button>
+                <button type="button" id="btn-del-force" class="hidden flex-1 px-4 py-2.5 rounded-xl bg-amber-700 hover:bg-amber-600 text-white font-bold text-xs transition">Eliminar solo la cuenta</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: HISTORIAL -->
+    <div id="history-modal" class="hidden fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-darkCard w-full max-w-xl p-6 rounded-3xl shadow-2xl border border-purple-500/30 relative">
+            <button type="button" data-close="history-modal" class="absolute top-4 right-4 text-slate-400 hover:text-white p-1">✕</button>
+            <h2 class="text-lg font-extrabold text-white mb-3">Historial: <span id="hist-company"></span></h2>
+            <ul id="hist-list" class="space-y-2 max-h-96 overflow-y-auto text-xs"></ul>
+        </div>
+    </div>
+
+    <!-- MODAL: MI CONTRASEÑA -->
+    <div id="password-modal" class="hidden fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-darkCard w-full max-w-sm p-6 rounded-3xl shadow-2xl border border-purple-500/30 relative">
+            <button type="button" data-close="password-modal" class="absolute top-4 right-4 text-slate-400 hover:text-white p-1">✕</button>
+            <h2 class="text-lg font-extrabold text-white mb-1">Cambiar mi contraseña</h2>
+            <p class="text-xs text-slate-400 mb-4">Al guardar se cierra tu sesión y debes entrar de nuevo.</p>
+            <form id="password-form" class="space-y-3">
+                <input type="password" id="pw-current" required autocomplete="current-password" placeholder="Contraseña actual" class="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:ring-2 focus:ring-[#690991]">
+                <input type="password" id="pw-new" required minlength="8" autocomplete="new-password" placeholder="Nueva contraseña (mínimo 8)" class="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:ring-2 focus:ring-[#690991]">
+                <p id="pw-error" class="hidden text-red-400 text-xs font-semibold"></p>
+                <button type="submit" class="w-full bg-[#690991] hover:bg-[#4a0066] text-white py-2.5 rounded-xl font-bold text-xs transition">Guardar contraseña</button>
             </form>
         </div>
     </div>
 
     <!-- TOAST -->
-    <div id="admin-toast" class="hidden fixed bottom-5 right-5 z-50 bg-slate-900 border border-purple-500/40 text-white px-4 py-3 rounded-2xl shadow-2xl text-xs font-semibold">
+    <div id="admin-toast" class="hidden fixed bottom-5 right-5 z-[60] max-w-sm bg-slate-900 border border-purple-500/40 text-white px-4 py-3 rounded-2xl shadow-2xl text-xs font-semibold">
         <span id="admin-toast-text">Listo</span>
     </div>
 
     <script>
-        let allUsers = [
-            {
-                id: 101,
-                full_name: "José Luis",
-                company_name: "JL Burger",
-                email: "contacto@jlburger.com",
-                plan: "Pro",
-                mensajes_consumidos: 1420,
-                limite_mensajes: 5000,
-                estado_agente: "Activo",
-                is_active: true,
-                evolution_instance: "jl_burger",
-                chatwoot_url: "https://app.chatwoot.com",
-                nocodb_url: "https://app.nocodb.com"
-            },
-            {
-                id: 102,
-                full_name: "Gerencia Engranos",
-                company_name: "Engranos",
-                email: "operaciones@engranos.com",
-                plan: "Enterprise",
-                mensajes_consumidos: 8340,
-                limite_mensajes: 50000,
-                estado_agente: "Activo",
-                is_active: true,
-                evolution_instance: "engranos",
-                chatwoot_url: "https://app.chatwoot.com",
-                nocodb_url: "https://app.nocodb.com"
-            }
-        ];
+        let allUsers = [];
+        let deleteTarget = null;
+
         function apiUrl(p) { const o = window.location.origin; return (o && o !== 'null' && !o.startsWith('file')) ? o + p : p; }
         function getCsrfToken() {
             const m = document.cookie.match(/(?:^|; )qxao_csrf=([^;]*)/);
@@ -234,23 +228,55 @@
             if (csrf) h["X-CSRF-Token"] = csrf;
             return h;
         }
-        let isOfflineDemo = false;
+        function esc(v) {
+            return String(v ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+        }
+        function slugifyEmpresa(nombre) {
+            return (nombre || "").toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
+        }
+        function mensajeError(data, status) {
+            const d = data && data.detail;
+            if (typeof d === "string" && d) return d;
+            if (d) return JSON.stringify(d);
+            return "No se pudo completar la acción (HTTP " + status + ")";
+        }
 
-        function notificarAdmin(msg) {
+        let toastTimer = null;
+        function notificarAdmin(msg, ms = 4000) {
             const t = document.getElementById("admin-toast");
             document.getElementById("admin-toast-text").textContent = msg;
             t.classList.remove("hidden");
-            setTimeout(() => t.classList.add("hidden"), 3200);
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => t.classList.add("hidden"), ms);
         }
 
-        function slugifyEmpresa(nombre) {
-            return (nombre || "").toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
+        // Llamada única a la API: devuelve { ok, status, data }
+        async function api(url, method = "GET", body = null) {
+            const opts = { method, credentials: "include", headers: buildHeaders(body ? { "Content-Type": "application/json" } : {}) };
+            if (body) opts.body = JSON.stringify(body);
+            let res;
+            try { res = await fetch(apiUrl(url), opts); }
+            catch (e) { return { ok: false, status: 0, data: { detail: "Error de red. Revisa tu conexión." } }; }
+            const raw = await res.text();
+            let data = {};
+            try { data = JSON.parse(raw); } catch (_) { data = { detail: raw || ("Error HTTP " + res.status) }; }
+            if (res.status === 401) { window.location.assign("/qxaomaster_88.html"); }
+            return { ok: res.ok && data.success !== false, status: res.status, data };
+        }
+
+        function abrirModal(id) { document.getElementById(id).classList.remove("hidden"); }
+        function cerrarModal(id) { document.getElementById(id).classList.add("hidden"); }
+
+        function badgeProvision(u) {
+            const st = u.provision_status || "pendiente";
+            if (st === "activo") return `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">Aprovisionado</span>`;
+            if (st === "error") return `<span title="${esc(u.provision_error)}" class="px-2 py-0.5 rounded text-[10px] font-bold bg-red-500/15 text-red-300 border border-red-500/30 cursor-help">Error: ${esc((u.provision_error || "ver historial").slice(0, 40))}</span>`;
+            return `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-800 text-slate-300">Pendiente</span>`;
         }
 
         function renderizarTablaUsuarios(filtro = "") {
             const tbody = document.getElementById("users-table-body");
             tbody.innerHTML = "";
-
             const q = filtro.trim().toLowerCase();
             const lista = allUsers.filter(u =>
                 !q ||
@@ -258,103 +284,90 @@
                 (u.full_name || "").toLowerCase().includes(q) ||
                 (u.email || "").toLowerCase().includes(q)
             );
+            document.getElementById("empty-state").classList.toggle("hidden", lista.length > 0);
 
             lista.forEach(u => {
                 const tr = document.createElement("tr");
-                tr.className = "hover:bg-slate-900/40 transition";
-
+                tr.className = "hover:bg-slate-900/40 transition align-top";
+                const bloqueado = u.is_active === false;
+                const agenteActivo = (u.estado_agente || "Activo") === "Activo";
                 const tieneChat = Boolean(u.chatwoot_url);
                 const tieneNoco = Boolean(u.nocodb_url);
+                const id = esc(u.id);
 
                 tr.innerHTML = `
                     <td class="py-3.5 px-4">
-                        <div class="font-bold text-white">${u.company_name || "Sin empresa"}</div>
-                        <div class="text-slate-400 text-[11px]">${u.full_name} • ${u.email}</div>
+                        <div class="font-bold text-white">${esc(u.company_name || "Sin empresa")}</div>
+                        <div class="text-slate-400 text-[11px]">${esc(u.full_name)} • ${esc(u.email)}</div>
                     </td>
                     <td class="py-3.5 px-4 font-mono text-purple-300">
-                        ${u.evolution_instance || slugifyEmpresa(u.company_name)}
+                        ${esc(u.evolution_instance || "—")}
+                        <div class="mt-1 font-sans text-[10px] ${u.whatsapp_conectado ? 'text-emerald-400' : 'text-slate-500'}">${u.whatsapp_conectado ? "● WhatsApp conectado" : "○ WhatsApp sin conectar"}</div>
                     </td>
                     <td class="py-3.5 px-4">
-                        <div class="flex items-center gap-1.5">
-                            <span class="px-2 py-0.5 rounded text-[10px] font-bold ${tieneChat ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30' : 'bg-slate-800 text-slate-400'}">
-                                Chatwoot: ${tieneChat ? 'Listo' : 'Pendiente'}
-                            </span>
-                            <span class="px-2 py-0.5 rounded text-[10px] font-bold ${tieneNoco ? 'bg-purple-500/15 text-purple-300 border border-purple-500/30' : 'bg-slate-800 text-slate-400'}">
-                                NocoDB: ${tieneNoco ? 'Listo' : 'Pendiente'}
-                            </span>
+                        <div class="flex flex-wrap items-center gap-1.5">
+                            ${badgeProvision(u)}
+                            <span class="px-2 py-0.5 rounded text-[10px] font-bold ${tieneChat ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30' : 'bg-slate-800 text-slate-400'}">Chatwoot: ${tieneChat ? 'Listo' : 'Pendiente'}</span>
+                            <span class="px-2 py-0.5 rounded text-[10px] font-bold ${tieneNoco ? 'bg-purple-500/15 text-purple-300 border border-purple-500/30' : 'bg-slate-800 text-slate-400'}">NocoDB: ${tieneNoco ? 'Listo' : 'Pendiente'}</span>
                         </div>
                     </td>
                     <td class="py-3.5 px-4">
-                        <div class="font-semibold text-white">${u.plan}</div>
-                        <div class="text-slate-400 text-[11px]">${(u.mensajes_consumidos || 0).toLocaleString()} / ${(u.limite_mensajes || 1000).toLocaleString()}</div>
+                        <div class="font-semibold text-white">${esc(u.plan)}</div>
+                        <div class="text-slate-400 text-[11px]">${Number(u.mensajes_consumidos || 0).toLocaleString()} / ${Number(u.limite_mensajes || 1000).toLocaleString()}</div>
+                    </td>
+                    <td class="py-3.5 px-4 space-y-1">
+                        <div><span class="px-2.5 py-1 rounded-full text-[11px] font-bold ${agenteActivo ? 'bg-emerald-500/15 text-emerald-400' : 'bg-amber-500/15 text-amber-400'}">Agente ${esc(u.estado_agente || "Activo")}</span></div>
+                        <div><span class="px-2.5 py-1 rounded-full text-[11px] font-bold ${bloqueado ? 'bg-red-500/15 text-red-300' : 'bg-slate-800 text-slate-300'}">${bloqueado ? "Acceso bloqueado" : "Acceso libre"}</span></div>
                     </td>
                     <td class="py-3.5 px-4">
-                        <span class="px-2.5 py-1 rounded-full text-[11px] font-bold ${u.estado_agente === 'Activo' ? 'bg-emerald-500/15 text-emerald-400' : 'bg-amber-500/15 text-amber-400'}">
-                            ${u.estado_agente || 'Activo'}
-                        </span>
-                    </td>
-                    <td class="py-3.5 px-4 text-right space-x-1 whitespace-nowrap">
-                        <button type="button" data-action="impersonate" data-email="${u.email}" class="px-2.5 py-1.5 rounded-lg bg-[#690991]/30 hover:bg-[#690991] text-purple-200 hover:text-white font-semibold transition">
-                            Entrar al Panel
-                        </button>
-                        <button type="button" data-action="edit" data-id="${u.id}" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold transition">
-                            Editar / URLs
-                        </button>
-                        <button type="button" data-action="reprovision" data-id="${u.id}" class="px-2.5 py-1.5 rounded-lg bg-indigo-950/80 hover:bg-indigo-800 text-indigo-300 font-semibold transition" title="Reenviar orden al Webhook de n8n">
-                            Sync n8n
-                        </button>
+                        <div class="flex flex-wrap justify-end gap-1.5 max-w-[360px] ml-auto">
+                            <button type="button" data-action="impersonate" data-email="${esc(u.email)}" class="act bg-[#690991]/30 hover:bg-[#690991] text-purple-200 hover:text-white">Entrar al panel</button>
+                            <button type="button" data-action="edit" data-id="${id}" class="act bg-slate-800 hover:bg-slate-700 text-slate-200">Editar</button>
+                            <button type="button" data-action="toggle-agent" data-id="${id}" class="act ${agenteActivo ? 'bg-amber-900/50 hover:bg-amber-700 text-amber-200' : 'bg-emerald-900/50 hover:bg-emerald-700 text-emerald-200'}">${agenteActivo ? "Pausar agente" : "Activar agente"}</button>
+                            <button type="button" data-action="toggle-block" data-id="${id}" class="act bg-slate-800 hover:bg-slate-700 text-slate-200">${bloqueado ? "Desbloquear acceso" : "Bloquear acceso"}</button>
+                            <button type="button" data-action="reset-usage" data-id="${id}" class="act bg-slate-800 hover:bg-slate-700 text-slate-200" title="Pone el consumo de mensajes en 0">Reiniciar consumo</button>
+                            <button type="button" data-action="reprovision" data-id="${id}" class="act bg-indigo-950/80 hover:bg-indigo-800 text-indigo-300" title="Reintenta el aprovisionamiento en n8n">Sync n8n</button>
+                            <button type="button" data-action="history" data-id="${id}" class="act bg-slate-800 hover:bg-slate-700 text-slate-200">Historial</button>
+                            <button type="button" data-action="delete" data-id="${id}" class="act bg-red-950/70 hover:bg-red-700 text-red-300 hover:text-white">Eliminar</button>
+                        </div>
                     </td>
                 `;
                 tbody.appendChild(tr);
             });
-
-            document.getElementById("kpi-clients").textContent = allUsers.filter(u => u.is_active !== false).length;
-            const totalMsj = allUsers.reduce((acc, item) => acc + Number(item.mensajes_consumidos || 0), 0);
-            document.getElementById("kpi-messages").textContent = totalMsj.toLocaleString();
         }
 
         async function cargarDatosAdmin() {
-            try {
-                const [resStats, resUsers] = await Promise.all([
-                    fetch(apiUrl("/api/admin/stats"), { credentials: "include" }),
-                    fetch(apiUrl("/api/admin/users"), { credentials: "include" })
-                ]);
-                if (!resUsers.ok) throw new Error("Modo demostración");
-                const usersData = await resUsers.json();
-                allUsers = usersData;
-                if (resStats.ok) {
-                    const st = await resStats.json();
-                    document.getElementById("kpi-clients").textContent = st.total_active_clients ?? allUsers.length;
-                    document.getElementById("kpi-messages").textContent = (st.conversations_today ?? 0).toLocaleString();
-                    document.getElementById("kpi-rate").textContent = (st.success_rate ?? 94.5) + "%";
-                }
-            } catch (e) {
-                isOfflineDemo = true;
+            const [resStats, resUsers] = await Promise.all([api("/api/admin/stats"), api("/api/admin/users")]);
+            if (!resUsers.ok) {
+                allUsers = [];
+                notificarAdmin("No se pudieron cargar los clientes: " + mensajeError(resUsers.data, resUsers.status), 6000);
+            } else {
+                allUsers = resUsers.data;
             }
-            renderizarTablaUsuarios();
+            if (resStats.ok) {
+                document.getElementById("kpi-clients").textContent = resStats.data.total_active_clients ?? 0;
+                document.getElementById("kpi-messages").textContent = Number(resStats.data.conversations_today ?? 0).toLocaleString();
+                document.getElementById("kpi-paused").textContent = resStats.data.paused_agents ?? 0;
+            }
+            renderizarTablaUsuarios(document.getElementById("search-input").value);
         }
 
         function abrirModalCrear() {
-            document.getElementById("modal-title").textContent = "Nuevo Cliente Multi-Tenant";
-            document.getElementById("edit-user-id").value = "";
-            document.getElementById("m-name").value = "";
-            document.getElementById("m-company").value = "";
-            document.getElementById("m-email").value = "";
+            document.getElementById("modal-title").textContent = "Nuevo Cliente";
+            ["edit-user-id", "m-name", "m-company", "m-email", "m-password", "m-instance", "m-chatwoot", "m-nocodb"].forEach(i => document.getElementById(i).value = "");
             document.getElementById("m-plan").value = "Básico";
-            document.getElementById("m-password").value = "";
             document.getElementById("m-password").required = true;
             document.getElementById("m-password-label").textContent = "Contraseña Inicial";
-            document.getElementById("m-instance").value = "";
-            document.getElementById("m-chatwoot").value = "";
-            document.getElementById("m-nocodb").value = "";
             document.getElementById("auto-provision-row").classList.remove("hidden");
-            document.getElementById("user-modal").classList.remove("hidden");
+            document.getElementById("urls-row").classList.add("hidden");
+            document.getElementById("modal-error").classList.add("hidden");
+            abrirModal("user-modal");
         }
 
         function abrirModalEditar(userId) {
             const u = allUsers.find(item => String(item.id) === String(userId));
             if (!u) return;
-            document.getElementById("modal-title").textContent = "Editar Cliente: " + u.company_name;
+            document.getElementById("modal-title").textContent = "Editar cliente: " + u.company_name;
             document.getElementById("edit-user-id").value = u.id;
             document.getElementById("m-name").value = u.full_name || "";
             document.getElementById("m-company").value = u.company_name || "";
@@ -362,66 +375,132 @@
             document.getElementById("m-plan").value = u.plan || "Básico";
             document.getElementById("m-password").value = "";
             document.getElementById("m-password").required = false;
-            document.getElementById("m-password-label").textContent = "Nueva Contraseña (opcional)";
+            document.getElementById("m-password-label").textContent = "Nueva contraseña (opcional)";
             document.getElementById("m-instance").value = u.evolution_instance || "";
             document.getElementById("m-chatwoot").value = u.chatwoot_url || "";
             document.getElementById("m-nocodb").value = u.nocodb_url || "";
             document.getElementById("auto-provision-row").classList.add("hidden");
-            document.getElementById("user-modal").classList.remove("hidden");
+            document.getElementById("urls-row").classList.remove("hidden");
+            document.getElementById("modal-error").classList.add("hidden");
+            abrirModal("user-modal");
         }
 
-        function cerrarModal() {
-            document.getElementById("user-modal").classList.add("hidden");
+        async function mostrarHistorial(u) {
+            document.getElementById("hist-company").textContent = u.company_name || u.email;
+            const ul = document.getElementById("hist-list");
+            ul.innerHTML = `<li class="text-slate-400">Cargando…</li>`;
+            abrirModal("history-modal");
+            const r = await api(`/api/admin/users/${u.id}/errors`);
+            if (!r.ok || !Array.isArray(r.data)) { ul.innerHTML = `<li class="text-red-300">${esc(mensajeError(r.data, r.status))}</li>`; return; }
+            if (!r.data.length) { ul.innerHTML = `<li class="text-slate-400">Sin eventos registrados.</li>`; return; }
+            ul.innerHTML = r.data.map(l => `<li class="bg-slate-900 border border-slate-800 rounded-xl px-3 py-2"><span class="text-slate-500 font-mono text-[10px]">${esc(l.timestamp)}</span><div class="text-slate-200">${esc(l.mensaje)}</div></li>`).join("");
+        }
+
+        function abrirEliminar(u) {
+            deleteTarget = u;
+            document.getElementById("del-company").textContent = u.company_name || u.email;
+            document.getElementById("del-email").textContent = u.email;
+            document.getElementById("del-confirm").value = "";
+            document.getElementById("btn-del-confirm").disabled = true;
+            document.getElementById("btn-del-force").classList.add("hidden");
+            document.getElementById("del-error").classList.add("hidden");
+            abrirModal("delete-modal");
+        }
+
+        async function ejecutarEliminar(force) {
+            if (!deleteTarget) return;
+            const btns = [document.getElementById("btn-del-confirm"), document.getElementById("btn-del-force")];
+            btns.forEach(b => b.disabled = true);
+            notificarAdmin("Eliminando… n8n está limpiando WhatsApp, Chatwoot y NocoDB");
+            const r = await api(`/api/admin/users/${deleteTarget.id}${force ? "?force=true" : ""}`, "DELETE");
+            if (r.ok) {
+                cerrarModal("delete-modal");
+                notificarAdmin(r.data.n8n_cleanup ? "Cliente eliminado y ecosistema limpiado" : "Cuenta eliminada (el ecosistema externo NO se limpió)", 6000);
+                deleteTarget = null;
+                await cargarDatosAdmin();
+                return;
+            }
+            const err = document.getElementById("del-error");
+            err.textContent = mensajeError(r.data, r.status);
+            err.classList.remove("hidden");
+            btns[0].disabled = document.getElementById("del-confirm").value.trim().toLowerCase() !== deleteTarget.email.toLowerCase();
+            if (r.data && r.data.needs_force) {
+                err.textContent += " Puedes reintentar, o eliminar solo la cuenta y limpiar WhatsApp/Chatwoot/NocoDB a mano.";
+                btns[1].classList.remove("hidden");
+                btns[1].disabled = false;
+            }
         }
 
         document.addEventListener("DOMContentLoaded", () => {
             cargarDatosAdmin();
 
             document.getElementById("btn-open-create").addEventListener("click", abrirModalCrear);
-            document.getElementById("btn-close-modal").addEventListener("click", cerrarModal);
+            document.getElementById("btn-open-password").addEventListener("click", () => {
+                document.getElementById("password-form").reset();
+                document.getElementById("pw-error").classList.add("hidden");
+                abrirModal("password-modal");
+            });
+            document.querySelectorAll("[data-close]").forEach(b => b.addEventListener("click", () => cerrarModal(b.getAttribute("data-close"))));
 
             document.getElementById("m-company").addEventListener("input", (e) => {
-                const instInput = document.getElementById("m-instance");
                 if (!document.getElementById("edit-user-id").value) {
-                    instInput.value = slugifyEmpresa(e.target.value);
+                    document.getElementById("m-instance").value = slugifyEmpresa(e.target.value);
                 }
             });
+            document.getElementById("search-input").addEventListener("input", (e) => renderizarTablaUsuarios(e.target.value));
 
-            document.getElementById("search-input").addEventListener("input", (e) => {
-                renderizarTablaUsuarios(e.target.value);
+            document.getElementById("del-confirm").addEventListener("input", (e) => {
+                document.getElementById("btn-del-confirm").disabled =
+                    !deleteTarget || e.target.value.trim().toLowerCase() !== deleteTarget.email.toLowerCase();
             });
+            document.getElementById("btn-del-confirm").addEventListener("click", () => ejecutarEliminar(false));
+            document.getElementById("btn-del-force").addEventListener("click", () => ejecutarEliminar(true));
 
             document.getElementById("users-table-body").addEventListener("click", async (e) => {
                 const btn = e.target.closest("button[data-action]");
-                if (!btn) return;
+                if (!btn || btn.disabled) return;
                 const action = btn.getAttribute("data-action");
+                const id = btn.getAttribute("data-id");
+                const u = allUsers.find(item => String(item.id) === String(id));
 
-                if (action === "edit") {
-                    abrirModalEditar(btn.getAttribute("data-id"));
-                } else if (action === "impersonate") {
-                    const email = btn.getAttribute("data-email");
-                    try {
-                        sessionStorage.setItem("is_impersonating", "true");
-                        sessionStorage.setItem("impersonate_email", email);
-                    } catch (err) {}
-                    if (!isOfflineDemo) {
-                        await fetch(apiUrl("/api/admin/impersonate"), {
-                            method: "POST",
-                            credentials: "include",
-                            headers: buildHeaders({ "Content-Type": "application/json" }),
-                            body: JSON.stringify({ email })
-                        });
+                if (action === "edit") { abrirModalEditar(id); return; }
+                if (action === "history" && u) { mostrarHistorial(u); return; }
+                if (action === "delete" && u) { abrirEliminar(u); return; }
+
+                if (action === "impersonate") {
+                    btn.disabled = true;
+                    const r = await api("/api/admin/impersonate", "POST", { email: btn.getAttribute("data-email") });
+                    if (r.ok) {
+                        try { sessionStorage.setItem("is_impersonating", "true"); sessionStorage.setItem("impersonate_email", btn.getAttribute("data-email")); } catch (err) {}
+                        window.location.assign("/dashboard.html");
+                    } else {
+                        btn.disabled = false;
+                        notificarAdmin(mensajeError(r.data, r.status), 6000);
                     }
-                    window.location.assign("/dashboard.html");
-                } else if (action === "reprovision") {
-                    const id = btn.getAttribute("data-id");
-                    notificarAdmin("Enviando orden de aprovisionamiento a n8n...");
-                    if (!isOfflineDemo) {
-                        await fetch(apiUrl(`/api/admin/users/${id}/reprovision`), { method: "POST", credentials: "include", headers: buildHeaders() });
-                        await cargarDatosAdmin();
-                    }
-                    notificarAdmin("Webhook enviado a n8n ('Gerente General')");
+                    return;
                 }
+
+                if (!u) return;
+                btn.disabled = true;
+                let r;
+                if (action === "toggle-agent") {
+                    r = await api(`/api/admin/users/${id}/toggle-agent`, "PUT");
+                    if (r.ok) notificarAdmin(`Agente de ${u.company_name}: ${r.data.estado_agente}`);
+                } else if (action === "toggle-block") {
+                    if (u.is_active !== false && !confirm(`¿Bloquear el acceso de ${u.company_name}? Se cerrará su sesión y no podrá entrar a su panel.`)) { btn.disabled = false; return; }
+                    r = await api(`/api/admin/users/${id}/toggle-block`, "PUT");
+                    if (r.ok) notificarAdmin(r.data.is_active ? "Acceso desbloqueado" : "Acceso bloqueado y sesión cerrada");
+                } else if (action === "reset-usage") {
+                    if (!confirm(`¿Reiniciar a 0 el consumo de mensajes de ${u.company_name}?`)) { btn.disabled = false; return; }
+                    r = await api(`/api/admin/users/${id}/reset-usage`, "POST");
+                    if (r.ok) notificarAdmin("Consumo reiniciado");
+                } else if (action === "reprovision") {
+                    notificarAdmin("Enviando orden de aprovisionamiento a n8n…", 8000);
+                    r = await api(`/api/admin/users/${id}/reprovision`, "POST");
+                    if (r.ok) notificarAdmin("n8n aprovisionó el ecosistema del cliente");
+                }
+                if (r && !r.ok) notificarAdmin(mensajeError(r.data, r.status), 7000);
+                await cargarDatosAdmin();
             });
 
             document.getElementById("user-form").addEventListener("submit", async (e) => {
@@ -433,65 +512,53 @@
                     email: document.getElementById("m-email").value.trim(),
                     plan: document.getElementById("m-plan").value,
                     password: document.getElementById("m-password").value,
-                    evolution_instance: document.getElementById("m-instance").value.trim() || slugifyEmpresa(document.getElementById("m-company").value),
-                    chatwoot_url: document.getElementById("m-chatwoot").value.trim(),
-                    nocodb_url: document.getElementById("m-nocodb").value.trim(),
-                    auto_provision_n8n: document.getElementById("m-auto-n8n").checked
+                    evolution_instance: document.getElementById("m-instance").value.trim() || slugifyEmpresa(document.getElementById("m-company").value)
                 };
-
-                if (isOfflineDemo) {
-                    if (editId) {
-                        const idx = allUsers.findIndex(u => String(u.id) === String(editId));
-                        if (idx >= 0) allUsers[idx] = { ...allUsers[idx], ...payload };
-                        notificarAdmin("Cliente actualizado en vista previa");
-                    } else {
-                        allUsers.unshift({
-                            id: Date.now(),
-                            ...payload,
-                            mensajes_consumidos: 0,
-                            limite_mensajes: 5000,
-                            estado_agente: "Activo",
-                            is_active: true
-                        });
-                        notificarAdmin("Cliente creado + Webhook enviado a n8n");
-                    }
-                    cerrarModal();
-                    renderizarTablaUsuarios();
-                    return;
+                if (editId) {
+                    payload.chatwoot_url = document.getElementById("m-chatwoot").value.trim();
+                    payload.nocodb_url = document.getElementById("m-nocodb").value.trim();
+                } else {
+                    payload.auto_provision_n8n = document.getElementById("m-auto-n8n").checked;
                 }
 
-                const url = editId ? `/api/admin/users/${editId}` : "/api/admin/users";
-                const method = editId ? "PUT" : "POST";
+                const errEl = document.getElementById("modal-error");
+                const saveBtn = document.getElementById("btn-save");
+                errEl.classList.add("hidden");
+                saveBtn.disabled = true;
+                saveBtn.textContent = editId ? "Guardando…" : "Creando y aprovisionando… (puede tardar un minuto)";
 
-                try {
-                    const errEl = document.getElementById("modal-error");
-                    errEl.classList.add("hidden");
-                    const res = await fetch(apiUrl(url), {
-                        method,
-                        credentials: "include",
-                        headers: buildHeaders({ "Content-Type": "application/json" }),
-                        body: JSON.stringify(payload)
-                    });
-                    const rawText = await res.text();
-                    let data = {};
-                    try { data = JSON.parse(rawText); } catch (_) { data = { success: false, detail: rawText || ("Error HTTP " + res.status) }; }
-                    if (res.ok && data.success) {
-                        cerrarModal();
-                        await cargarDatosAdmin();
-                        notificarAdmin(editId ? "Cliente actualizado correctamente" : "Cliente creado y aprovisionado");
-                    } else {
-                        errEl.textContent = data.detail || ("No se pudo guardar (HTTP " + res.status + ")");
-                        errEl.classList.remove("hidden");
-                    }
-                } catch (err) {
-                    notificarAdmin("Error de red al guardar el cliente");
+                const r = await api(editId ? `/api/admin/users/${editId}` : "/api/admin/users", editId ? "PUT" : "POST", payload);
+                saveBtn.disabled = false;
+                saveBtn.textContent = "Guardar";
+
+                if (r.ok) {
+                    cerrarModal("user-modal");
+                    notificarAdmin(r.data.message || (editId ? "Cliente actualizado" : "Cliente creado"), 7000);
+                    await cargarDatosAdmin();
+                } else {
+                    errEl.textContent = mensajeError(r.data, r.status);
+                    errEl.classList.remove("hidden");
+                }
+            });
+
+            document.getElementById("password-form").addEventListener("submit", async (e) => {
+                e.preventDefault();
+                const err = document.getElementById("pw-error");
+                err.classList.add("hidden");
+                const r = await api("/api/admin/change-password", "PUT", {
+                    current_password: document.getElementById("pw-current").value,
+                    new_password: document.getElementById("pw-new").value
+                });
+                if (r.ok) {
+                    window.location.assign("/qxaomaster_88.html");
+                } else {
+                    err.textContent = mensajeError(r.data, r.status);
+                    err.classList.remove("hidden");
                 }
             });
 
             document.getElementById("btn-admin-logout").addEventListener("click", async () => {
-                try {
-                    await fetch(apiUrl("/api/logout/staff"), { method: "POST", credentials: "include", headers: buildHeaders() });
-                } catch (e) {}
+                await api("/api/logout/staff", "POST");
                 window.location.assign("/qxaomaster_88.html");
             });
         });
