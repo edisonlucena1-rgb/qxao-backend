@@ -50,6 +50,7 @@ class UserModel(Base):
     whatsapp_conectado = Column(Boolean, default=False)
     provision_status = Column(String, default="pendiente")  # pendiente | activo | error
     provision_error = Column(String, nullable=True)
+    ecosistema_ids = Column(String, nullable=True)  # JSON: ids creados por n8n (Chatwoot cuenta/usuario, base NocoDB)
 
 
 class StaffModel(Base):
@@ -85,7 +86,8 @@ def ensure_multitenant_columns():
         "qr_webhook_url": "TEXT",
         "whatsapp_conectado": "BOOLEAN DEFAULT FALSE",
         "provision_status": "VARCHAR(20) DEFAULT 'pendiente'",
-        "provision_error": "TEXT"
+        "provision_error": "TEXT",
+        "ecosistema_ids": "TEXT"
     }
     try:
         inspector = inspect(engine)

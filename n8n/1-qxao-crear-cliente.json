@@ -1,0 +1,718 @@
+{
+  "name": "Qxao - Crear cliente",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "qxao-crear-cliente",
+        "authentication": "headerAuth",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "0e2d9e91-ef75-4b60-aa88-373dfd5e7b3b",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        260,
+        300
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": null,
+          "name": "Qxao Webhook Secret"
+        }
+      },
+      "webhookId": "0dfda2a9-7e91-4fde-b1d9-f89eb87070fe"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $input.first().json.body || {};\nconst clean = (s) => String(s || '').toLowerCase().replace(/[^a-z0-9_-]/g, '').slice(0, 60);\nconst instance = clean(body.evolution_instance);\nif (instance.length < 2) throw new Error('evolution_instance invalido o vacio');\nif (!body.client_id) throw new Error('client_id requerido');\nif (!body.email) throw new Error('email requerido');\nfunction rnd(n) {\n  const a = new Uint32Array(n);\n  if (typeof crypto !== 'undefined' && crypto.getRandomValues) crypto.getRandomValues(a);\n  else for (let i = 0; i < n; i++) a[i] = Math.floor(Math.random() * 4294967296);\n  return a;\n}\nconst sets = ['ABCDEFGHJKLMNPQRSTUVWXYZ', 'abcdefghijkmnopqrstuvwxyz', '23456789', '!@#$%*-_'];\nconst all = sets.join('');\nconst r = rnd(20);\nlet password = '';\nfor (let i = 0; i < 4; i++) password += sets[i][r[i] % sets[i].length];\nfor (let i = 4; i < 20; i++) password += all[r[i] % all.length];\nreturn [{ json: {\n  client_id: body.client_id,\n  email: String(body.email).trim(),\n  full_name: body.full_name || body.company_name || instance,\n  company_name: body.company_name || instance,\n  instance,\n  password,\n  evo: 'https://evolution.qxao.dpdns.org', chat: 'https://chat.qxao.dpdns.org', crm: 'https://crm.qxao.dpdns.org', n8n: 'https://n8n.qxao.dpdns.org'\n} }];"
+      },
+      "id": "d012e5fb-86fe-40ed-9ec5-a4e46cec48d6",
+      "name": "Config",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        520,
+        300
+      ],
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $input.first().json;\nlet msg = raw.error && (raw.error.message || raw.error.description || JSON.stringify(raw.error));\nif (!msg && raw.body) msg = 'HTTP ' + raw.statusCode + ' ' + JSON.stringify(raw.body);\nif (!msg) msg = raw.message || JSON.stringify(raw);\nreturn [{ json: { success: false, error: 'Config: ' + String(msg).slice(0, 400) } }];"
+      },
+      "id": "7e997a27-92c5-477e-85e8-09eb36ea999e",
+      "name": "Error - Config",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        780,
+        600
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Config').first().json.evo }}/instance/create",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true
+            }
+          }
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ instanceName: $('Config').first().json.instance, integration: 'WHATSAPP-BAILEYS', qrcode: true }) }}"
+      },
+      "id": "309c352a-df51-4874-a67b-f19b41f8ed0b",
+      "name": "Evolution crear instancia",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1040,
+        300
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": null,
+          "name": "Evolution API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "a4829b67-1434-4047-ac87-d1ece65a48ec",
+              "leftValue": "={{ $json.statusCode < 300 || ($json.statusCode === 403 && JSON.stringify($json.body).toLowerCase().includes('already')) }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "8eae3ddb-0754-44a6-b2f6-240eb8716e69",
+      "name": "Evolution ok",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1300,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $input.first().json;\nlet msg = raw.error && (raw.error.message || raw.error.description || JSON.stringify(raw.error));\nif (!msg && raw.body) msg = 'HTTP ' + raw.statusCode + ' ' + JSON.stringify(raw.body);\nif (!msg) msg = raw.message || JSON.stringify(raw);\nreturn [{ json: { success: false, error: 'Evolution: ' + String(msg).slice(0, 400) } }];"
+      },
+      "id": "67c3709e-a324-4ad1-80a3-0597a568f8c1",
+      "name": "Error - Evolution",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1560,
+        600
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Config').first().json.chat }}/platform/api/v1/accounts",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {},
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ name: $('Config').first().json.company_name, locale: 'es' }) }}"
+      },
+      "id": "d4b92b9f-7181-4a7e-bd89-eb62a88b6b23",
+      "name": "Chatwoot cuenta",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1820,
+        300
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": null,
+          "name": "Chatwoot Platform"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $input.first().json;\nlet msg = raw.error && (raw.error.message || raw.error.description || JSON.stringify(raw.error));\nif (!msg && raw.body) msg = 'HTTP ' + raw.statusCode + ' ' + JSON.stringify(raw.body);\nif (!msg) msg = raw.message || JSON.stringify(raw);\nreturn [{ json: { success: false, error: 'Chatwoot cuenta: ' + String(msg).slice(0, 400) } }];"
+      },
+      "id": "4d7cd27e-3114-42c1-af39-05f25824472b",
+      "name": "Error - Chatwoot cuenta",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2080,
+        600
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Config').first().json.chat }}/platform/api/v1/users",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {},
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ name: $('Config').first().json.full_name, display_name: $('Config').first().json.full_name, email: $('Config').first().json.email, password: $('Config').first().json.password, custom_attributes: { qxao_client_id: $('Config').first().json.client_id } }) }}"
+      },
+      "id": "92d48331-f753-4ce7-a4df-cb653c79b006",
+      "name": "Chatwoot usuario",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2340,
+        300
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": null,
+          "name": "Chatwoot Platform"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $input.first().json;\nlet msg = raw.error && (raw.error.message || raw.error.description || JSON.stringify(raw.error));\nif (!msg && raw.body) msg = 'HTTP ' + raw.statusCode + ' ' + JSON.stringify(raw.body);\nif (!msg) msg = raw.message || JSON.stringify(raw);\nreturn [{ json: { success: false, error: 'Chatwoot usuario: ' + String(msg).slice(0, 400) } }];"
+      },
+      "id": "12d2b9d9-d605-4754-87e9-bb15319e6127",
+      "name": "Error - Chatwoot usuario",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2600,
+        600
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Config').first().json.chat }}/platform/api/v1/accounts/{{ $('Chatwoot cuenta').first().json.id }}/account_users",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {},
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ user_id: $('Chatwoot usuario').first().json.id, role: 'administrator' }) }}"
+      },
+      "id": "0cd6fc87-f6c0-4526-8c0b-be20292a8902",
+      "name": "Chatwoot vincular usuario",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2860,
+        300
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": null,
+          "name": "Chatwoot Platform"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $input.first().json;\nlet msg = raw.error && (raw.error.message || raw.error.description || JSON.stringify(raw.error));\nif (!msg && raw.body) msg = 'HTTP ' + raw.statusCode + ' ' + JSON.stringify(raw.body);\nif (!msg) msg = raw.message || JSON.stringify(raw);\nreturn [{ json: { success: false, error: 'Chatwoot vincular: ' + String(msg).slice(0, 400) } }];"
+      },
+      "id": "dfbccd3c-13ea-4103-a544-1334551bce33",
+      "name": "Error - Chatwoot vincular",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3120,
+        600
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Config').first().json.evo }}/chatwoot/set/{{ $('Config').first().json.instance }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {},
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ enabled: true, accountId: String($('Chatwoot cuenta').first().json.id), token: $('Chatwoot usuario').first().json.access_token, url: $('Config').first().json.chat, signMsg: false, reopenConversation: true, conversationPending: false, nameInbox: $('Config').first().json.instance, importContacts: false, importMessages: false, daysLimitImportMessages: 7, autoCreate: true, organization: $('Config').first().json.company_name }) }}"
+      },
+      "id": "8cf988c7-6043-43b9-995c-f1f43886720a",
+      "name": "Evolution conectar Chatwoot",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3380,
+        300
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": null,
+          "name": "Evolution API"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $input.first().json;\nlet msg = raw.error && (raw.error.message || raw.error.description || JSON.stringify(raw.error));\nif (!msg && raw.body) msg = 'HTTP ' + raw.statusCode + ' ' + JSON.stringify(raw.body);\nif (!msg) msg = raw.message || JSON.stringify(raw);\nreturn [{ json: { success: false, error: 'Evolution-Chatwoot: ' + String(msg).slice(0, 400) } }];"
+      },
+      "id": "cbafba83-fe27-431c-91e3-7f8c0df6d809",
+      "name": "Error - Evolution-Chatwoot",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3640,
+        600
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Config').first().json.crm }}/api/v2/meta/bases/",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {},
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ title: $('Config').first().json.company_name + ' (' + $('Config').first().json.instance + ')' }) }}"
+      },
+      "id": "16e604ff-c52e-420d-8cc0-93ab74db4d32",
+      "name": "NocoDB base",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3900,
+        300
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": null,
+          "name": "NocoDB"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $input.first().json;\nlet msg = raw.error && (raw.error.message || raw.error.description || JSON.stringify(raw.error));\nif (!msg && raw.body) msg = 'HTTP ' + raw.statusCode + ' ' + JSON.stringify(raw.body);\nif (!msg) msg = raw.message || JSON.stringify(raw);\nreturn [{ json: { success: false, error: 'NocoDB base: ' + String(msg).slice(0, 400) } }];"
+      },
+      "id": "6f2fa2f4-2912-4e41-9f95-a3d61b475980",
+      "name": "Error - NocoDB base",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4160,
+        600
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// PLANTILLA DE TABLAS DE CADA CLIENTE: edita esta lista para cambiar lo que recibe cada cliente nuevo.\nconst T = (name, cols) => ({ json: {\n  table_name: name, title: name,\n  columns: [{ column_name: 'id', title: 'Id', uidt: 'ID' }].concat(cols.map(([n, t]) => ({ column_name: n, title: n, uidt: t })))\n} });\nreturn [\n  T('leads', [['nombre', 'SingleLineText'], ['telefono', 'SingleLineText'], ['email', 'SingleLineText'], ['estado', 'SingleLineText'], ['notas', 'LongText']]),\n  T('productos', [['nombre', 'SingleLineText'], ['descripcion', 'LongText'], ['precio', 'Decimal'], ['disponible', 'Checkbox']]),\n  T('pedidos', [['cliente', 'SingleLineText'], ['telefono', 'SingleLineText'], ['detalle', 'LongText'], ['total', 'Decimal'], ['estado', 'SingleLineText']])\n];"
+      },
+      "id": "81bb08d1-3592-4385-b3eb-bd2db58f3650",
+      "name": "Plantilla tablas NocoDB",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4420,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Config').first().json.crm }}/api/v2/meta/bases/{{ $('NocoDB base').first().json.id }}/tables",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {},
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ table_name: $json.table_name, title: $json.title, columns: $json.columns }) }}"
+      },
+      "id": "de2ce606-fb54-4c39-8b44-5c4f8ce86cb6",
+      "name": "NocoDB crear tabla",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        4680,
+        300
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": null,
+          "name": "NocoDB"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $input.first().json;\nlet msg = raw.error && (raw.error.message || raw.error.description || JSON.stringify(raw.error));\nif (!msg && raw.body) msg = 'HTTP ' + raw.statusCode + ' ' + JSON.stringify(raw.body);\nif (!msg) msg = raw.message || JSON.stringify(raw);\nreturn [{ json: { success: false, error: 'NocoDB tablas: ' + String(msg).slice(0, 400) } }];"
+      },
+      "id": "2999d909-66ac-4a65-8416-037705f6dd3e",
+      "name": "Error - NocoDB tablas",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4940,
+        600
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const cfg = $('Config').first().json;\nconst acc = $('Chatwoot cuenta').first().json;\nconst usr = $('Chatwoot usuario').first().json;\nconst base = $('NocoDB base').first().json;\nreturn [{ json: {\n  success: true,\n  evolution_instance: cfg.instance,\n  chatwoot_url: `${cfg.chat}/app/accounts/${acc.id}/dashboard`,\n  nocodb_url: `${cfg.crm}/dashboard/#/nc/${base.id}`,\n  qr_webhook_url: `${cfg.n8n}/webhook/qxao-obtener-qr`,\n  ecosistema_ids: { chatwoot_account_id: acc.id, chatwoot_user_id: usr.id, nocodb_base_id: base.id }\n} }];"
+      },
+      "id": "1bfa5f0d-527d-4bac-a420-df2a56c2d5c2",
+      "name": "Armar respuesta",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5200,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "ba4eef99-b7e4-4d00-bf8d-8b0ca909cebb",
+      "name": "Responder OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        5460,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "8ebb0aee-51f6-49e9-a486-934e7ca09a65",
+      "name": "Responder error",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        5720,
+        600
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Config": {
+      "main": [
+        [
+          {
+            "node": "Evolution crear instancia",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Error - Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Evolution crear instancia": {
+      "main": [
+        [
+          {
+            "node": "Evolution ok",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Evolution ok": {
+      "main": [
+        [
+          {
+            "node": "Chatwoot cuenta",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Error - Evolution",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Chatwoot cuenta": {
+      "main": [
+        [
+          {
+            "node": "Chatwoot usuario",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Error - Chatwoot cuenta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Chatwoot usuario": {
+      "main": [
+        [
+          {
+            "node": "Chatwoot vincular usuario",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Error - Chatwoot usuario",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Chatwoot vincular usuario": {
+      "main": [
+        [
+          {
+            "node": "Evolution conectar Chatwoot",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Error - Chatwoot vincular",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Evolution conectar Chatwoot": {
+      "main": [
+        [
+          {
+            "node": "NocoDB base",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Error - Evolution-Chatwoot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "NocoDB base": {
+      "main": [
+        [
+          {
+            "node": "Plantilla tablas NocoDB",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Error - NocoDB base",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Plantilla tablas NocoDB": {
+      "main": [
+        [
+          {
+            "node": "NocoDB crear tabla",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "NocoDB crear tabla": {
+      "main": [
+        [
+          {
+            "node": "Armar respuesta",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Error - NocoDB tablas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Armar respuesta": {
+      "main": [
+        [
+          {
+            "node": "Responder OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Error - Config": {
+      "main": [
+        [
+          {
+            "node": "Responder error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Error - Evolution": {
+      "main": [
+        [
+          {
+            "node": "Responder error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Error - Chatwoot cuenta": {
+      "main": [
+        [
+          {
+            "node": "Responder error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Error - Chatwoot usuario": {
+      "main": [
+        [
+          {
+            "node": "Responder error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Error - Chatwoot vincular": {
+      "main": [
+        [
+          {
+            "node": "Responder error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Error - Evolution-Chatwoot": {
+      "main": [
+        [
+          {
+            "node": "Responder error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Error - NocoDB base": {
+      "main": [
+        [
+          {
+            "node": "Responder error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Error - NocoDB tablas": {
+      "main": [
+        [
+          {
+            "node": "Responder error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {}
+}
