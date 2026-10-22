@@ -1,0 +1,318 @@
+{
+  "name": "Qxao - Obtener QR",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "qxao-obtener-qr",
+        "authentication": "headerAuth",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "57c07294-1862-4164-8e95-f57edb2f9b88",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        260,
+        300
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": null,
+          "name": "Qxao Webhook Secret"
+        }
+      },
+      "webhookId": "f7d66e6d-4871-46ef-9007-e6377ec50d44"
+    },
+    {
+      "parameters": {
+        "jsCode": "const j = $input.first().json;\nconst src = Object.assign({}, j.body || {}, j.query || {});\nconst instance = String(src.evolution_instance || src.instance || '').toLowerCase().replace(/[^a-z0-9_-]/g, '').slice(0, 60);\nif (instance.length < 2) throw new Error('evolution_instance invalido o vacio');\nreturn [{ json: { instance, evo: 'https://evolution.qxao.dpdns.org' } }];"
+      },
+      "id": "1726b106-2d1f-4622-a581-6a5e407272f5",
+      "name": "Config",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        520,
+        300
+      ],
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $input.first().json;\nlet msg = raw.error && (raw.error.message || raw.error.description || JSON.stringify(raw.error));\nif (!msg && raw.body) msg = 'HTTP ' + raw.statusCode + ' ' + JSON.stringify(raw.body);\nif (!msg) msg = raw.message || JSON.stringify(raw);\nreturn [{ json: { success: false, error: 'Config: ' + String(msg).slice(0, 400) } }];"
+      },
+      "id": "ccf249af-1c3a-4ff1-bbad-216fad7f8264",
+      "name": "Error - Config",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        780,
+        600
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $('Config').first().json.evo }}/instance/connectionState/{{ $('Config').first().json.instance }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "73ec27f9-6c3c-4a64-8641-e088ee933d14",
+      "name": "Evolution estado",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1040,
+        300
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": null,
+          "name": "Evolution API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "74eab354-877c-40a8-94ff-238c1ede975a",
+              "leftValue": "={{ $json.statusCode === 200 && $json.body && $json.body.instance && $json.body.instance.state === 'open' }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "22189c83-15fa-4d66-9d05-39f369d15972",
+      "name": "Esta conectado",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1300,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: { success: true, status: 'CONNECTED', whatsapp_conectado: true } }];"
+      },
+      "id": "e80a708d-7ce7-4022-ac24-cf237d52118e",
+      "name": "Armar conectado",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1560,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $('Config').first().json.evo }}/instance/connect/{{ $('Config').first().json.instance }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "e4293e82-47de-4528-a68f-3318188a288a",
+      "name": "Evolution conectar QR",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1820,
+        600
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": null,
+          "name": "Evolution API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const r = $input.first().json;\nif (r.statusCode !== 200 || !r.body) {\n  return [{ json: { success: false, error: 'Evolution respondio HTTP ' + r.statusCode + ': ' + JSON.stringify(r.body).slice(0, 300) } }];\n}\nconst b = r.body;\nreturn [{ json: { success: true, status: b.base64 ? 'QR_READY' : 'WAITING', base64: b.base64 || '', pairing_code: b.pairingCode || null } }];"
+      },
+      "id": "cb8e5bc1-144e-4dfd-b3c2-0391892c99de",
+      "name": "Armar QR",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2080,
+        600
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "87c5473e-c4e3-4027-8d3a-dca4dbc47c19",
+      "name": "Responder",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        2340,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "3faad105-5d7d-4662-bbae-9669859fef15",
+      "name": "Responder error",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        2600,
+        600
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Config": {
+      "main": [
+        [
+          {
+            "node": "Evolution estado",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Error - Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Error - Config": {
+      "main": [
+        [
+          {
+            "node": "Responder error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Evolution estado": {
+      "main": [
+        [
+          {
+            "node": "Esta conectado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Esta conectado": {
+      "main": [
+        [
+          {
+            "node": "Armar conectado",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Evolution conectar QR",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Armar conectado": {
+      "main": [
+        [
+          {
+            "node": "Responder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Evolution conectar QR": {
+      "main": [
+        [
+          {
+            "node": "Armar QR",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Armar QR": {
+      "main": [
+        [
+          {
+            "node": "Responder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {}
+}

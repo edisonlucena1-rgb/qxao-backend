@@ -1,0 +1,322 @@
+{
+  "name": "Qxao - Eliminar cliente",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "qxao-eliminar-cliente",
+        "authentication": "headerAuth",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "68c8ee81-56b4-4690-bec6-77ddf06feac3",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        260,
+        300
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": null,
+          "name": "Qxao Webhook Secret"
+        }
+      },
+      "webhookId": "fcc93b0f-2855-44ed-9d86-eef1522436b5"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $input.first().json.body || {};\nconst clean = (s) => String(s || '').toLowerCase().replace(/[^a-z0-9_-]/g, '').slice(0, 60);\nconst ids = body.ecosistema_ids || {};\nconst num = (v) => (Number.isInteger(Number(v)) && Number(v) > 0) ? String(Number(v)) : '';\nconst idStr = (v) => /^[A-Za-z0-9_]{3,40}$/.test(String(v || '')) ? String(v) : '';\nconst instance = clean(body.evolution_instance);\nconst evo = 'https://evolution.qxao.dpdns.org', chat = 'https://chat.qxao.dpdns.org', crm = 'https://crm.qxao.dpdns.org';\nconst accId = num(ids.chatwoot_account_id), usrId = num(ids.chatwoot_user_id), baseId = idStr(ids.nocodb_base_id);\nreturn [{ json: {\n  instance, accId, usrId, baseId,\n  skip: { evolution: !instance, chatwoot_account: !accId, chatwoot_user: !usrId, nocodb: !baseId },\n  url_logout: instance ? `${evo}/instance/logout/${instance}` : '',\n  url_evo: instance ? `${evo}/instance/delete/${instance}` : '',\n  url_acc: accId ? `${chat}/platform/api/v1/accounts/${accId}` : '',\n  url_usr: usrId ? `${chat}/platform/api/v1/users/${usrId}` : '',\n  url_base: baseId ? `${crm}/api/v2/meta/bases/${baseId}` : ''\n} }];"
+      },
+      "id": "ce4e0062-feab-4035-a9d7-e481b1cf3169",
+      "name": "Config",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        520,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "DELETE",
+        "url": "={{ $('Config').first().json.url_logout }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "a70257f9-dc75-4820-919b-fad353f774fa",
+      "name": "Evolution desconectar",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        780,
+        300
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": null,
+          "name": "Evolution API"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "DELETE",
+        "url": "={{ $('Config').first().json.url_evo }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "6a8d347a-6b92-40bd-8d5d-23915e590714",
+      "name": "Evolution eliminar",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1040,
+        300
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": null,
+          "name": "Evolution API"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "DELETE",
+        "url": "={{ $('Config').first().json.url_acc }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "ebdff17f-1b24-4e3a-9990-a39232fd9713",
+      "name": "Chatwoot eliminar cuenta",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1300,
+        300
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": null,
+          "name": "Chatwoot Platform"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "DELETE",
+        "url": "={{ $('Config').first().json.url_usr }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "ee5d9b4e-f76f-44c0-a799-0e109f25d558",
+      "name": "Chatwoot eliminar usuario",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1560,
+        300
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": null,
+          "name": "Chatwoot Platform"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "DELETE",
+        "url": "={{ $('Config').first().json.url_base }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "d4bab821-1129-431d-b8de-d2c252f57ffa",
+      "name": "NocoDB eliminar base",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1820,
+        300
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": null,
+          "name": "NocoDB"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const cfg = $('Config').first().json;\nconst st = (n) => { try { return $(n).first().json; } catch (e) { return {}; } };\nconst ok = (r) => (r.statusCode >= 200 && r.statusCode < 300) || r.statusCode === 404;\nconst steps = [\n  ['Evolution eliminar', cfg.skip.evolution, st('Evolution eliminar')],\n  ['Chatwoot cuenta', cfg.skip.chatwoot_account, st('Chatwoot eliminar cuenta')],\n  ['Chatwoot usuario', cfg.skip.chatwoot_user, st('Chatwoot eliminar usuario')],\n  ['NocoDB base', cfg.skip.nocodb, st('NocoDB eliminar base')]\n];\nconst failures = [], skipped = [];\nfor (const [label, skip, r] of steps) {\n  if (skip) { skipped.push(label); continue; }\n  if (!ok(r)) failures.push(label + ': ' + (r.statusCode ? 'HTTP ' + r.statusCode : (r.error && r.error.message) || 'sin respuesta'));\n}\nconst out = { success: failures.length === 0, skipped };\nif (failures.length) out.error = 'No se pudo limpiar: ' + failures.join('; ');\nreturn [{ json: out }];"
+      },
+      "id": "5c5472a1-7d8a-4d10-86b2-f873de77f76c",
+      "name": "Evaluar limpieza",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2080,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "105da995-572e-410e-b3b2-32d68aa440d9",
+      "name": "Responder",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        2340,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Config": {
+      "main": [
+        [
+          {
+            "node": "Evolution desconectar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Evolution desconectar": {
+      "main": [
+        [
+          {
+            "node": "Evolution eliminar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Evolution eliminar": {
+      "main": [
+        [
+          {
+            "node": "Chatwoot eliminar cuenta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Chatwoot eliminar cuenta": {
+      "main": [
+        [
+          {
+            "node": "Chatwoot eliminar usuario",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Chatwoot eliminar usuario": {
+      "main": [
+        [
+          {
+            "node": "NocoDB eliminar base",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "NocoDB eliminar base": {
+      "main": [
+        [
+          {
+            "node": "Evaluar limpieza",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Evaluar limpieza": {
+      "main": [
+        [
+          {
+            "node": "Responder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {}
+}

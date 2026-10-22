@@ -469,6 +469,8 @@ def aprovisionar_cliente_en_n8n(user: UserModel, db: Session) -> dict:
             user.nocodb_url = resp["nocodb_url"]
         if resp.get("qr_webhook_url"):
             user.qr_webhook_url = resp["qr_webhook_url"]
+        if isinstance(resp.get("ecosistema_ids"), dict):
+            user.ecosistema_ids = json.dumps(resp["ecosistema_ids"])
         user.provision_status = "activo"
         user.provision_error = None
         registrar(db, user.id, f"Ecosistema aprovisionado por n8n (instancia: {user.evolution_instance}).")
@@ -664,7 +666,8 @@ def delete_user(
         "client_id": user.id,
         "company_name": user.company_name,
         "email": user.email,
-        "evolution_instance": user.evolution_instance
+        "evolution_instance": user.evolution_instance,
+        "ecosistema_ids": json.loads(user.ecosistema_ids) if user.ecosistema_ids else {}
     }
     resp = llamar_webhook_n8n(N8N_DELETE_CLIENT_WEBHOOK_URL, payload, timeout=60, only_post=True)
     n8n_ok = n8n_respondio_ok(resp)

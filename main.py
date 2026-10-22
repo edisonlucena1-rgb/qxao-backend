@@ -218,7 +218,9 @@ def despachar_pagina_html(request: Request, page_name: str):
 @app.get("/")
 @limiter.limit("60/minute")
 def mostrar_inicio(request: Request):
-    return FileResponse("templates/index.html")
+    if os.path.exists("templates/index.html"):
+        return FileResponse("templates/index.html")
+    return RedirectResponse(url="/login.html", status_code=302)
 
 
 @app.get("/onboarding")
