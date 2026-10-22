@@ -27,7 +27,12 @@ config = context.config
 # =========================================================
 # 3. CONFIGURACIÓN DINÁMICA DE LA URL (PostgreSQL / SQLite)
 # =========================================================
-config.set_main_option("sqlalchemy.url", os.environ.get("DATABASE_URL", "sqlite:///./qxao.db"))
+_db_url = os.environ.get("DATABASE_URL", "sqlite:///./qxao.db")
+if _db_url.startswith("postgres://"):
+    # SQLAlchemy 2.x no acepta el esquema "postgres://" (Easypanel lo entrega así)
+    _db_url = _db_url.replace("postgres://", "postgresql://", 1)
+# configparser interpola "%"; se escapa para que contraseñas con "%" no rompan
+config.set_main_option("sqlalchemy.url", _db_url.replace("%", "%%"))
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
