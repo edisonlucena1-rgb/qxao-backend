@@ -28,9 +28,11 @@ config = context.config
 # 3. CONFIGURACIÓN DINÁMICA DE LA URL (PostgreSQL / SQLite)
 # =========================================================
 _db_url = os.environ.get("DATABASE_URL", "sqlite:///./qxao.db")
+# Driver explícito (psycopg2); Easypanel entrega "postgres://", que SQLAlchemy 2.x no acepta
 if _db_url.startswith("postgres://"):
-    # SQLAlchemy 2.x no acepta el esquema "postgres://" (Easypanel lo entrega así)
-    _db_url = _db_url.replace("postgres://", "postgresql://", 1)
+    _db_url = _db_url.replace("postgres://", "postgresql+psycopg2://", 1)
+elif _db_url.startswith("postgresql://"):
+    _db_url = _db_url.replace("postgresql://", "postgresql+psycopg2://", 1)
 # configparser interpola "%"; se escapa para que contraseñas con "%" no rompan
 config.set_main_option("sqlalchemy.url", _db_url.replace("%", "%%"))
 
