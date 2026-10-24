@@ -581,10 +581,18 @@ def update_user(user_id: int, request: UpdateUserRequest, db: Session = Depends(
 
 
 @router.post("/api/admin/users/{user_id}/reprovision")
-def reprovision_user_n8n(user_id: int, db: Session = Depends(get_db), master: StaffModel = Depends(get_master_user)):
+def reprovision_user_n8n(user_id: int, force: bool = False, db: Session = Depends(get_db), master: StaffModel = Depends(get_master_user)):
     user = db.query(UserModel).filter(UserModel.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="Cliente no encontrado")
+    # Idempotencia: si ya está aprovisionado no se vuelve a crear (evita cuentas/bases duplicadas).
+    if user.provision_status == "activo" and user.ecosistema_ids and not force:
+        return {
+            "success": True,
+            "provision_status": user.provision_status,
+            "detail": "Ya estaba aprovisionado; no se creó nada nuevo.",
+            "n8n_provisioning": {"skipped": True}
+        }
     resultado = aprovisionar_cliente_en_n8n(user, db)
     return {
         "success": bool(resultado.get("provisioned")),

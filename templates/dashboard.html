@@ -458,9 +458,11 @@
             document.getElementById("label-chatwoot-url").textContent = data.chatwoot_url || "Pendiente de aprovisionamiento en n8n";
 
             if (data.chatwoot_url) {
-                iframeChat.src = data.chatwoot_url;
-                iframeChat.classList.remove("hidden");
-                emptyChat.classList.add("hidden");
+                // Chatwoot bloquea el embebido (X-Frame-Options): se abre en pestaña nueva.
+                iframeChat.removeAttribute("src");
+                iframeChat.classList.add("hidden");
+                emptyChat.classList.remove("hidden");
+                emptyChat.innerHTML = '<div class="w-14 h-14 rounded-2xl bg-[#690991]/20 border border-purple-500/30 flex items-center justify-center text-xl mb-4">💬</div><h4 class="text-base font-bold text-white">Tu bandeja de chat</h4><p class="text-xs text-slate-400 max-w-md mt-2 mb-5">Se abre en una pestaña nueva para que puedas atender tus conversaciones con todas las funciones.</p><a href="' + data.chatwoot_url + '" target="_blank" rel="noopener noreferrer" class="px-5 py-2.5 rounded-xl bg-[#690991] hover:bg-purple-700 text-sm font-bold text-white transition">Abrir bandeja ↗</a>';
                 linkChat.href = data.chatwoot_url;
             } else {
                 iframeChat.removeAttribute("src");
@@ -475,9 +477,11 @@
             document.getElementById("label-nocodb-url").textContent = data.nocodb_url || "Pendiente de aprovisionamiento en n8n";
 
             if (data.nocodb_url) {
-                iframeNoco.src = data.nocodb_url;
-                iframeNoco.classList.remove("hidden");
-                emptyNoco.classList.add("hidden");
+                // NocoDB bloquea el embebido: se abre en pestaña nueva.
+                iframeNoco.removeAttribute("src");
+                iframeNoco.classList.add("hidden");
+                emptyNoco.classList.remove("hidden");
+                emptyNoco.innerHTML = '<div class="w-14 h-14 rounded-2xl bg-[#690991]/20 border border-purple-500/30 flex items-center justify-center text-xl mb-4">📦</div><h4 class="text-base font-bold text-white">Tu inventario y pedidos</h4><p class="text-xs text-slate-400 max-w-md mt-2 mb-5">Se abre en una pestaña nueva con tus tablas de leads, productos y pedidos.</p><a href="' + data.nocodb_url + '" target="_blank" rel="noopener noreferrer" class="px-5 py-2.5 rounded-xl bg-[#690991] hover:bg-purple-700 text-sm font-bold text-white transition">Abrir inventario ↗</a>';
                 linkNoco.href = data.nocodb_url;
             } else {
                 iframeNoco.removeAttribute("src");
